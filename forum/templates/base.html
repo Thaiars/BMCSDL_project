@@ -1,0 +1,51 @@
+<!doctype html>
+<html>
+  <head>
+    {% load static %}
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>{% block title %}Mini Forum{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{% static 'forum/theme.css' %}" rel="stylesheet">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="/">Mini Forum</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navMain">
+          <ul class="navbar-nav ms-auto align-items-center">
+            {% if user.is_authenticated %}
+              <li class="nav-item"><span class="nav-link">{{ user.first_name|default:user.username }} <small>({{ user.get_role_display }})</small></span></li>
+              {% if user.role == 'member' or user.role == 'moderator' or user.role == 'admin' %}
+                <li class="nav-item"><a class="nav-link" href="/threads/create/">Create</a></li>
+              {% endif %}
+              {% if user.role == 'admin' %}
+                <li class="nav-item"><a class="nav-link" href="/admin/">Admin</a></li>
+              {% endif %}
+              <li class="nav-item"><a class="nav-link" href="/accounts/logout/">Logout</a></li>
+            {% else %}
+              <li class="nav-item"><span class="nav-link text-muted">(Guest)</span></li>
+              <li class="nav-item"><a class="nav-link" href="/accounts/login/">Login</a></li>
+              <li class="nav-item"><a class="nav-link" href="/accounts/signup/">Sign up</a></li>
+            {% endif %}
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <main class="container mt-4">
+      <div class="card-soft">
+        {% block content %}{% endblock %}
+      </div>
+
+      <footer class="site-footer text-center">
+        <small class="d-block">&copy; {% now "Y" %} Mini Forum — Simple white & teal theme</small>
+      </footer>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

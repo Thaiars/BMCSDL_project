@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Mini Forum{% endblock %}
+
+{% block content %}
+  <h1>Threads</h1>
+  <form method="get" action="" class="mb-3">
+    <div class="d-flex flex-column flex-md-row gap-2">
+      <input type="search" name="q" class="form-control flex-grow-1" placeholder="Search threads" value="{{ query }}">
+      <input type="text" name="author" class="form-control" style="max-width:220px;" placeholder="Author username" value="{{ author_q }}">
+      <div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </div>
+  </form>
+  <div class="list-group">
+    {% for t in threads %}
+      <a class="list-group-item list-group-item-action" href="{% url 'forum:detail' t.id %}">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1 thread-title">{{ t.title }}</h5>
+          <small class="small-muted">{{ t.created_at }}</small>
+        </div>
+        <p class="mb-1 small-muted">by {{ t.author }}</p>
+      </a>
+    {% empty %}
+      <div class="list-group-item">No threads yet</div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-3">
+      <ul class="pagination">
+        {% if threads.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ threads.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if author_q %}&author={{ author_q|urlencode }}{% endif %}">Previous</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in threads.paginator.page_range %}
+          {% if num == threads.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if author_q %}&author={{ author_q|urlencode }}{% endif %}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if threads.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ threads.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if author_q %}&author={{ author_q|urlencode }}{% endif %}">Next</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% endblock %}

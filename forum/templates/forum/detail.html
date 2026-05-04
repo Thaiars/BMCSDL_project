@@ -1,0 +1,319 @@
+<!doctype html>
+{% extends 'base.html' %}
+
+{% block title %}{{ thread.title }}{% endblock %}
+
+{% block content %}
+  <div class="mb-3">
+    <div class="d-flex align-items-start">
+      <h1 class="thread-title me-3">{{ thread.title }}</h1>
+      {% if user.is_authenticated %}
+        {% if thread.author == user or user.role == 'moderator' or user.role == 'admin' %}
+          <form method="post" action="{% url 'forum:delete_thread' thread.id %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="Delete thread">
+              <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+            </button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="thread-meta mb-2">By <strong>{{ thread.author }}</strong> — {{ thread.created_at }}</div>
+    {% if thread.image %}
+      <div class="mb-3">
+        <img src="{{ thread.image.url }}" alt="thread image" class="img-fluid rounded">
+      </div>
+    {% endif %}
+    <div class="mb-4">{{ thread.content }}</div>
+  </div>
+
+  <h3>Comments</h3>
+  <div class="mb-3">
+    {% for c in comments %}
+      <div class="card mb-2">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><strong>{{ c.author }}</strong></div>
+            <small class="small-muted">{{ c.created_at }}</small>
+          </div>
+          <div class="mt-2">{{ c.content }}</div>
+          {% if c.image %}
+            <div class="mt-2"><img src="{{ c.image.url }}" alt="comment image" class="img-fluid rounded" style="max-width:360px"></div>
+          {% endif %}
+          <div class="mt-2 d-flex align-items-center comment-actions">
+            <a href="?reply_to={{ c.id }}#reply-area-{{ c.id }}" class="reply-toggle small-muted" data-id="{{ c.id }}" aria-label="Reply">
+              <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 19 4 12 10 5"></polyline><path d="M20 19v-2a4 4 0 0 0-4-4H7"></path></svg>
+            </a>
+            <!-- image icon moved into the reply textarea for inline placement -->
+            {% if user.is_authenticated %}
+              {% if c.author == user or user.is_superuser %}
+                <form method="post" action="{% url 'forum:delete_comment' c.id %}" class="d-inline ms-3">{% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="Delete comment">
+                    <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <div id="reply-area-{{ c.id }}" class="reply-area mt-2" style="display: {% if reply_to == c.id %}block{% else %}none{% endif %};">
+            <form method="post" action="{% url 'forum:detail' thread.id %}" enctype="multipart/form-data" class="reply-inline-form">{% csrf_token %}
+              <div class="mb-2 textarea-with-icon position-relative">
+                <textarea name="content" class="form-control" rows="2" placeholder="Write a reply (optional)..."></textarea>
+                <a href="?reply_to={{ c.id }}#reply-area-{{ c.id }}" class="image-trigger textarea-icon small-muted" data-id="{{ c.id }}" aria-label="Add image">
+                  <svg class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L3 21"></path></svg>
+                </a>
+              </div>
+              <div class="mb-2 d-flex align-items-center">
+                <input type="file" name="image" id="reply-image-{{ c.id }}" class="file-offscreen" accept="image/*">
+                <img id="reply-preview-{{ c.id }}" class="reply-image-preview img-fluid rounded d-none mt-2" style="max-width:200px; display:none">
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-2 remove-reply-image d-none" data-id="{{ c.id }}">Remove</button>
+                <input type="hidden" name="parent_id" value="{{ c.id }}">
+                <button type="submit" class="btn btn-sm btn-primary me-2">Reply</button>
+                <button type="button" class="btn btn-sm btn-secondary cancel-reply" data-id="{{ c.id }}">Cancel</button>
+              </div>
+              {% if reply_to == c.id and form.non_field_errors %}
+                {% for err in form.non_field_errors %}
+                  <div class="text-danger">{{ err }}</div>
+                {% endfor %}
+              {% endif %}
+            </form>
+          </div>
+
+          {% for reply in c.replies_qs %}
+            <div class="card mt-3 ms-4">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div><strong>{{ reply.author }}</strong></div>
+                  <small class="small-muted">{{ reply.created_at }}</small>
+                </div>
+                <div class="mt-2">{{ reply.content }}</div>
+                {% if reply.image %}
+                  <div class="mt-2"><img src="{{ reply.image.url }}" alt="reply image" class="img-fluid rounded" style="max-width:300px"></div>
+                {% endif %}
+                <div class="mt-2">
+                  {% if user.is_authenticated %}
+                    {% if reply.author == user or user.is_superuser %}
+                      <form method="post" action="{% url 'forum:delete_comment' reply.id %}" class="d-inline">{% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="Delete reply">
+                          <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                        </button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+
+        </div>
+      </div>
+    {% empty %}
+      <div class="list-group-item">No comments</div>
+    {% endfor %}
+  </div>
+
+  {% if user.is_authenticated %}
+    <form id="comment-form" method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="mb-3">{{ form.content.label_tag }}</div>
+      <div class="mb-3 textarea-with-icon position-relative">
+        {{ form.content }}
+        <a href="javascript:void(0)" id="main-image-trigger" class="image-trigger textarea-icon small-muted" aria-label="Add image">
+          <svg class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L3 21"></path></svg>
+        </a>
+      </div>
+      <div class="mb-3 d-flex align-items-center">
+        <span class="file-offscreen">{{ form.image }}</span>
+        <img id="main-image-preview" class="main-image-preview img-fluid rounded d-none ms-3" style="max-width:360px; display:none">
+        <button type="button" id="main-remove-image" class="btn btn-sm btn-outline-secondary ms-2 d-none">Remove</button>
+      </div>
+      <input type="hidden" name="parent_id" value="{{ reply_to }}">
+      <button class="btn btn-primary" type="submit">Post comment</button>
+    </form>
+  {% else %}
+    <p><a href="/accounts/login/">Login to comment</a></p>
+  {% endif %}
+
+  <p class="mt-3"><a href="{% url 'forum:index' %}">Back</a></p>
+{% endblock %}
+</html>
+
+<script>
+// Global helper to attach preview handler to reply file inputs
+window.attachReplyPreviewHandler = function(input){
+  if(!input || input._previewAttached) return;
+  input._previewAttached = true;
+  var id = input.id.replace('reply-image-','');
+  var preview = document.getElementById('reply-preview-' + id);
+  var removeBtn = document.querySelector('.remove-reply-image[data-id="' + id + '"]');
+  var lastUrl = null;
+  input.addEventListener('change', function(){
+    var file = input.files && input.files[0];
+    if(file){
+      if(lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = URL.createObjectURL(file);
+      if(preview){ preview.src = lastUrl; preview.style.display = 'block'; preview.classList.remove('d-none'); }
+      if(removeBtn){ removeBtn.classList.remove('d-none'); }
+    } else {
+      if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+      if(removeBtn){ removeBtn.classList.add('d-none'); }
+      if(lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    }
+  });
+  if(removeBtn){
+    removeBtn.addEventListener('click', function(){ input.value = ''; input.dispatchEvent(new Event('change')); });
+  }
+};
+
+// Global helper to attach preview handler to main file input
+window.attachMainPreviewHandler = function(input){
+  if(!input || input._previewAttached) return;
+  input._previewAttached = true;
+  var preview = document.getElementById('main-image-preview');
+  var removeBtn = document.getElementById('main-remove-image');
+  var lastUrl = null;
+  input.addEventListener('change', function(){
+    var file = input.files && input.files[0];
+    if(file){
+      if(lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = URL.createObjectURL(file);
+      if(preview){ preview.src = lastUrl; preview.style.display = 'block'; preview.classList.remove('d-none'); }
+      if(removeBtn){ removeBtn.classList.remove('d-none'); }
+    } else {
+      if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+      if(removeBtn){ removeBtn.classList.add('d-none'); }
+      if(lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    }
+  });
+  if(removeBtn){
+    removeBtn.addEventListener('click', function(){ input.value = ''; input.dispatchEvent(new Event('change')); });
+  }
+};
+
+// Unified delegated handlers for all interactions
+document.addEventListener('click', function(e){
+  var el = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, #main-image-trigger, .cancel-reply');
+  if(!el) return;
+  
+  // Reply toggle
+  if(el.classList && el.classList.contains('reply-toggle')){
+    e.preventDefault();
+    var id = el.dataset.id;
+    var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    var isOpen = area.style.display === 'block';
+    document.querySelectorAll('.reply-area').forEach(function(a){ if(a.id !== 'reply-area-' + id) a.style.display = 'none'; });
+    if(!isOpen){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; var ta = area.querySelector('textarea'); if(ta) ta.focus(); }
+    else { area.style.display = 'none'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block'; }
+    return;
+  }
+  
+  // Cancel reply
+  if(el.classList && el.classList.contains('cancel-reply')){
+    var id = el.dataset.id; var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    area.style.display = 'none';
+    var ta = area.querySelector('textarea'); if(ta) ta.value = '';
+    var input = area.querySelector('input[type=file]'); if(input){ input.value = ''; input.dispatchEvent(new Event('change')); }
+    var preview = area.querySelector('.reply-image-preview'); if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+    var removeBtn = area.querySelector('.remove-reply-image'); if(removeBtn){ removeBtn.classList.add('d-none'); }
+    var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block';
+    return;
+  }
+  
+  // Image trigger (main or reply)
+  if(el.id === 'main-image-trigger' || (el.classList && el.classList.contains('image-trigger'))){
+    e.preventDefault();
+    if(el.id === 'main-image-trigger'){
+      var mainInput = document.querySelector('#comment-form input[type=file]') || document.getElementById('id_image');
+      if(mainInput){ attachMainPreviewHandler(mainInput); setTimeout(function(){ try{ mainInput.click(); }catch(err){ console.error(err); } }, 10); }
+      else console.warn('[warn] main image input not found');
+      return;
+    }
+    var id = el.dataset.id;
+    var input = document.getElementById('reply-image-' + id);
+    if(!input) input = document.getElementById('reply-area-' + id) && document.getElementById('reply-area-' + id).querySelector('input[type=file]');
+    var area = document.getElementById('reply-area-' + id);
+    if(area){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; }
+    if(input){ attachReplyPreviewHandler(input); setTimeout(function(){ try{ input.click(); }catch(err){ console.error(err); } }, 10); }
+    else console.warn('[warn] reply image input not found for id', id);
+    return;
+  }
+});
+</script>
+
+<script>
+// Delegated handlers: robustly handle reply toggle, image triggers, and cancel even if elements change
+document.addEventListener('click', function(e){
+  var el = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, #main-image-trigger, .cancel-reply');
+  if(!el) return;
+  // Reply toggle
+  if(el.classList && el.classList.contains('reply-toggle')){
+    e.preventDefault();
+    var id = el.dataset.id;
+    var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    var isOpen = area.style.display === 'block';
+    // close others
+    document.querySelectorAll('.reply-area').forEach(function(a){ if(a.id !== 'reply-area-' + id) a.style.display = 'none'; });
+    if(!isOpen){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; var ta = area.querySelector('textarea'); if(ta) ta.focus(); }
+    else { area.style.display = 'none'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block'; }
+    return;
+  }
+
+  // Cancel reply
+  if(el.classList && el.classList.contains('cancel-reply')){
+    var id = el.dataset.id; var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    area.style.display = 'none';
+    var ta = area.querySelector('textarea'); if(ta) ta.value = '';
+    var input = area.querySelector('input[type=file]'); if(input){ input.value = ''; input.dispatchEvent(new Event('change')); }
+    var preview = area.querySelector('.reply-image-preview'); if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+    var removeBtn = area.querySelector('.remove-reply-image'); if(removeBtn){ removeBtn.classList.add('d-none'); }
+    var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block';
+    return;
+  }
+
+  // Image triggers (main or reply)
+  if(el.id === 'main-image-trigger' || (el.classList && el.classList.contains('image-trigger'))){
+    e.preventDefault();
+    if(el.id === 'main-image-trigger'){
+      var mainInput = document.querySelector('#comment-form input[type=file]') || document.getElementById('id_image');
+      attachMainPreviewHandler(mainInput);
+      if(mainInput){ setTimeout(function(){ try{ mainInput.click(); }catch(err){ console.error(err); } }, 50); }
+      else console.warn('[warn] main image input not found');
+      return;
+    }
+    // reply image trigger
+    var id = el.dataset.id;
+    var input = document.getElementById('reply-image-' + id) || (document.getElementById('reply-area-' + id) && document.getElementById('reply-area-' + id).querySelector('input[type=file]'));
+    var area = document.getElementById('reply-area-' + id);
+    if(area){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; }
+    if(input){ attachReplyPreviewHandler(input); setTimeout(function(){ try{ input.click(); }catch(err){ console.error(err); } }, 50); }
+    else console.warn('[warn] reply image input not found for id', id);
+    return;
+  }
+});
+</script>
+
+<script>
+// Lightweight debug helpers (no prevention) to capture client-side events
+document.addEventListener('click', function(e){
+  var t = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, .remove-reply-image, #main-image-trigger, .cancel-reply');
+  if(t){
+    console.log('[dbg] click', t.className, t.dataset && t.dataset.id);
+  }
+});
+document.addEventListener('change', function(e){
+  var t = e.target;
+  if(t && t.type === 'file'){
+    console.log('[dbg] file change on', t.id, 'files:', t.files && t.files.length);
+  }
+});
+document.addEventListener('submit', function(e){
+  var f = e.target;
+  if(f && (f.classList && f.classList.contains('reply-inline-form') || f.id === 'comment-form')){
+    console.log('[dbg] form submit', f.className || f.id);
+  }
+});
+</script>
