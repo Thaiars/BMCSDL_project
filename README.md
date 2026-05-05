@@ -12,6 +12,9 @@ python manage.py migrate
 python manage.py createsuperuser
 python manage.py runserver
 ```
+
+Run locally (Linux CLi):
+
 ```linux
 python -m venv .venv
 source .venv\bin\Activate
