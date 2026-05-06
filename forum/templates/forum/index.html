@@ -14,7 +14,7 @@
     </div>
   </form>
   <div class="list-group">
-    {% for t in threads %}
+    {% for t in threads.object_list|default:threads %}
       <a class="list-group-item list-group-item-action" href="{% url 'forum:detail' t.id %}">
         <div class="d-flex w-100 justify-content-between">
           <h5 class="mb-1 thread-title">{{ t.title }}</h5>

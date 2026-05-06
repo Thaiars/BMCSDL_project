@@ -1,57 +1,48 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseForbidden
-from .models import Thread, Comment, ActivityLog, User
-from django.db.models import Q
-from django.contrib.auth.decorators import login_required
-from django import forms
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.contrib.auth.forms import UserCreationForm
+from django.contrib import messages
 from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Q
+from django.http import Http404, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
+
+from .forms import (
+    AccountSettingsForm,
+    CommentForm,
+    CustomPasswordChangeForm,
+    CustomUserCreationForm,
+    ThreadForm,
+)
+from .models import ActivityLog, Comment, Thread, User
 from .permissions import (
-    can_view_thread, can_create_comment, can_delete_thread, can_delete_comment,
-    can_hide_thread, can_hide_comment, log_activity, is_member, is_moderator
+    can_create_comment,
+    can_delete_comment,
+    can_delete_thread,
+    can_view_thread,
+    is_member,
+    log_activity,
 )
 
 
-class ThreadForm(forms.ModelForm):
-    class Meta:
-        model = Thread
-        fields = ['title', 'content', 'image']
-        widgets = {
-            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Thread title'}),
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 6, 'placeholder': 'Write your thread content...'}),
-        }
-
-
-class CommentForm(forms.ModelForm):
-    class Meta:
-        model = Comment
-        fields = ['content', 'image']
-        widgets = {
-            'content': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Write a comment (optional)...'}),
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # allow image-only comments by making content optional on the form level
-        self.fields['content'].required = False
-
-
 def index(request):
-    thread_list = Thread.objects.filter(status=Thread.STATUS_PUBLISHED).order_by('-created_at')
-    q = request.GET.get('q', '').strip()
-    author = request.GET.get('author', '').strip()
+    thread_list = Thread.objects.filter(status=Thread.STATUS_PUBLISHED).order_by(
+        "-created_at"
+    )
+    q = request.GET.get("q", "").strip()
+    author = request.GET.get("author", "").strip()
+
     if q:
-        thread_list = thread_list.filter(Q(title__icontains=q) | Q(content__icontains=q))
+        thread_list = thread_list.filter(
+            Q(title__icontains=q) | Q(content__icontains=q)
+        )
     if author:
         thread_list = thread_list.filter(author__username__iexact=author)
 
-    # By default show all threads on one page for easier browsing.
-    # If you want pagination, pass `?paginate=1` and `page=` will be respected.
-    paginate = request.GET.get('paginate')
-    if paginate:
-        paginator = Paginator(thread_list, 5)  # 5 threads per page when paginating
-        page = request.GET.get('page')
+    paginate = request.GET.get("paginate", "1")
+    if paginate != "0":
+        paginator = Paginator(thread_list, 20)
+        page = request.GET.get("page")
         try:
             threads = paginator.page(page)
         except PageNotAnInteger:
@@ -63,131 +54,218 @@ def index(request):
         threads = thread_list
         is_paginated = False
 
-    return render(request, 'forum/index.html', {'threads': threads, 'query': q, 'author_q': author, 'is_paginated': is_paginated})
+    return render(
+        request,
+        "forum/index.html",
+        {
+            "threads": threads,
+            "query": q,
+            "author_q": author,
+            "is_paginated": is_paginated,
+        },
+    )
 
 
 @login_required
 def create_thread(request):
     if not is_member(request.user):
-        return HttpResponseForbidden('Only members can create threads')
-    if request.method == 'POST':
+        return HttpResponseForbidden("Only members can create threads")
+
+    if request.method == "POST":
         form = ThreadForm(request.POST, request.FILES)
         if form.is_valid():
             thread = form.save(commit=False)
             thread.author = request.user
-            # Save image if provided via form
-            if form.cleaned_data.get('image'):
-                thread.image = form.cleaned_data.get('image')
             thread.save()
-            log_activity(request.user, ActivityLog.ACTION_THREAD_CREATE, 'thread', thread.id)
-            return redirect('forum:index')
+            log_activity(
+                request.user, ActivityLog.ACTION_THREAD_CREATE, "thread", thread.id
+            )
+            messages.success(request, "Tạo thread thành công!")
+            return redirect("forum:index")
+        else:
+            messages.error(request, "Vui lòng kiểm tra lại thông tin.")
     else:
         form = ThreadForm()
-    return render(request, 'forum/create_thread.html', {'form': form})
+
+    return render(request, "forum/create_thread.html", {"form": form})
 
 
 def thread_detail(request, thread_id):
     thread = get_object_or_404(Thread, pk=thread_id)
     if thread.status == Thread.STATUS_DELETED:
-        return HttpResponseForbidden('Thread not available')
+        return HttpResponseForbidden("Thread not available")
     if not can_view_thread(request.user, thread):
-        return HttpResponseForbidden('You cannot view this thread')
-    # only top-level comments; replies are computed per comment below
-    comments = thread.comments.filter(status=Comment.STATUS_PUBLISHED, parent__isnull=True).order_by('created_at')
-    reply_to = request.GET.get('reply_to')
-    # normalize reply_to to integer when possible so template comparisons work
+        return HttpResponseForbidden("You cannot view this thread")
+
+    comments = thread.comments.filter(
+        status=Comment.STATUS_PUBLISHED, parent__isnull=True
+    ).order_by("created_at")
+    reply_to = request.GET.get("reply_to")
+
     try:
-        reply_to = int(reply_to) if reply_to is not None and reply_to != '' else None
+        reply_to = int(reply_to) if reply_to else None
     except (TypeError, ValueError):
         reply_to = None
-    if request.method == 'POST':
+
+    if request.method == "POST":
         if not request.user.is_authenticated or not can_create_comment(request.user):
-            return redirect('login')
+            return redirect("login")
+
         form = CommentForm(request.POST, request.FILES)
         if form.is_valid():
             comment = form.save(commit=False)
             comment.thread = thread
             comment.author = request.user
-            parent_id = request.POST.get('parent_id')
+
+            parent_id = request.POST.get("parent_id")
             if parent_id:
-                try:
-                    pid = int(parent_id)
-                except (TypeError, ValueError):
-                    pid = None
-                if pid:
-                    try:
-                        parent = Comment.objects.get(pk=pid)
-                        comment.parent = parent
-                    except Comment.DoesNotExist:
-                        pass
-            if form.cleaned_data.get('image'):
-                comment.image = form.cleaned_data.get('image')
-            # require at least content or image
-            content_val = form.cleaned_data.get('content')
-            image_val = form.cleaned_data.get('image')
-            if not content_val and not image_val:
-                form.add_error(None, 'Please provide text or an image for the comment.')
-                # preserve reply target so template can open correct inline form
-                try:
-                    reply_to = int(parent_id) if parent_id else None
-                except (TypeError, ValueError):
-                    reply_to = None
+                parent = Comment.objects.filter(pk=parent_id).first()
+                if parent:
+                    comment.parent = parent
+
+            if not form.cleaned_data.get("content") and not form.cleaned_data.get(
+                "image"
+            ):
+                form.add_error(None, "Vui lòng nhập nội dung hoặc tải ảnh.")
             else:
                 comment.save()
-                log_activity(request.user, ActivityLog.ACTION_COMMENT_CREATE, 'comment', comment.id)
-                return redirect('forum:detail', thread_id=thread.id)
+                log_activity(
+                    request.user,
+                    ActivityLog.ACTION_COMMENT_CREATE,
+                    "comment",
+                    comment.id,
+                )
+                messages.success(request, "Bình luận thành công!")
+                return redirect("forum:detail", thread_id=thread.id)
     else:
         form = CommentForm()
 
-    # attach replies queryset to each top-level comment for template iteration
     for c in comments:
-        c.replies_qs = c.replies.filter(status=Comment.STATUS_PUBLISHED).order_by('created_at')
+        c.replies_qs = c.replies.filter(status=Comment.STATUS_PUBLISHED).order_by(
+            "created_at"
+        )
 
-    return render(request, 'forum/detail.html', {'thread': thread, 'comments': comments, 'form': form, 'reply_to': reply_to})
+    return render(
+        request,
+        "forum/detail.html",
+        {"thread": thread, "comments": comments, "form": form, "reply_to": reply_to},
+    )
 
 
+@require_http_methods(["POST"])
+@login_required
 def delete_thread(request, thread_id):
     thread = get_object_or_404(Thread, pk=thread_id)
-    if not request.user.is_authenticated:
-        return redirect('login')
-    # allow author or moderator/admin to delete
     if not can_delete_thread(request.user, thread):
-        return HttpResponseForbidden('Not allowed')
-    if request.method == 'POST':
-        thread.status = Thread.STATUS_DELETED
-        thread.save()
-        log_activity(request.user, ActivityLog.ACTION_THREAD_DELETE, 'thread', thread.id, target_user=thread.author)
-        return redirect('forum:index')
-    return HttpResponseForbidden('Only POST allowed')
+        return HttpResponseForbidden("Not allowed")
+
+    thread.status = Thread.STATUS_DELETED
+    thread.save()
+    log_activity(
+        request.user,
+        ActivityLog.ACTION_THREAD_DELETE,
+        "thread",
+        thread.id,
+        target_user=thread.author,
+    )
+    messages.success(request, "Đã xóa thread.")
+    return redirect("forum:index")
 
 
+@require_http_methods(["POST"])
+@login_required
 def delete_comment(request, comment_id):
     comment = get_object_or_404(Comment, pk=comment_id)
-    if not request.user.is_authenticated:
-        return redirect('login')
-    # allow author or moderator/admin to delete
     if not can_delete_comment(request.user, comment):
-        return HttpResponseForbidden('Not allowed')
-    if request.method == 'POST':
-        thread_id = comment.thread.id
-        comment.status = Comment.STATUS_DELETED
-        comment.save()
-        log_activity(request.user, ActivityLog.ACTION_COMMENT_DELETE, 'comment', comment.id, target_user=comment.author)
-        # redirect back to thread detail
-        return redirect('forum:detail', thread_id=thread_id)
-    return HttpResponseForbidden('Only POST allowed')
+        return HttpResponseForbidden("Not allowed")
+
+    thread_id = comment.thread.id
+    comment.status = Comment.STATUS_DELETED
+    comment.save()
+    log_activity(
+        request.user,
+        ActivityLog.ACTION_COMMENT_DELETE,
+        "comment",
+        comment.id,
+        target_user=comment.author,
+    )
+    messages.success(request, "Đã xóa bình luận.")
+    return redirect("forum:detail", thread_id=thread_id)
 
 
 def signup(request):
-    if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
         if form.is_valid():
             user = form.save()
             auth_login(request, user)
-            return redirect('forum:index')
+            messages.success(request, f"Chào mừng {user.get_display_name()}!")
+            return redirect("forum:index")
+        else:
+            messages.error(request, "Đăng ký thất bại. Vui lòng kiểm tra lại.")
     else:
-        form = UserCreationForm()
-    # Add form-control classes to signup fields for consistent styling
-    for name, field in form.fields.items():
-        field.widget.attrs.update({'class': 'form-control'})
-    return render(request, 'registration/signup.html', {'form': form})
+        form = CustomUserCreationForm()
+
+    return render(request, "registration/signup.html", {"form": form})
+
+
+def user_profile(request, username):
+    target_user = get_object_or_404(User, username=username)
+    user_threads = target_user.threads.filter(status=Thread.STATUS_PUBLISHED).order_by(
+        "-created_at"
+    )[:10]
+
+    context = {
+        "target_user": target_user,
+        "user_threads": user_threads,
+        "thread_count": target_user.get_thread_count(),
+        "comment_count": target_user.get_comment_count(),
+        "is_own_profile": request.user.is_authenticated and request.user == target_user,
+    }
+    return render(request, "forum/user_profile.html", context)
+
+
+@login_required
+def account_settings(request):
+    if request.method == "POST":
+        form = AccountSettingsForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            log_activity(
+                request.user, ActivityLog.ACTION_USER_UPDATE, "user", request.user.id
+            )
+            messages.success(request, "Cập nhật thành công!")
+            return redirect("forum:account_settings")
+        else:
+            messages.error(
+                request, "Cập nhật thất bại. Vui lòng kiểm tra lại thông tin."
+            )
+    else:
+        form = AccountSettingsForm(instance=request.user)
+
+    return render(request, "forum/account_settings.html", {"form": form})
+
+
+@login_required
+def password_change_view(request):
+    if request.method == "POST":
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            log_activity(
+                request.user,
+                ActivityLog.ACTION_USER_UPDATE,
+                "user",
+                request.user.id,
+                details={"action": "password_changed"},
+            )
+            messages.success(
+                request, "Đổi mật khẩu thành công. Vui lòng đăng nhập lại."
+            )
+            return redirect("login")
+        else:
+            messages.error(request, "Đổi mật khẩu thất bại. Vui lòng kiểm tra lại.")
+    else:
+        form = CustomPasswordChangeForm(request.user)
+
+    return render(request, "forum/password_change.html", {"form": form})

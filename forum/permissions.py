@@ -1,11 +1,15 @@
 from functools import wraps
-from django.shortcuts import redirect
+
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseForbidden
-from .models import User, ActivityLog
+from django.shortcuts import redirect
+
+from .models import ActivityLog, User
 
 
-def log_activity(user, action, target_type=None, target_id=None, target_user=None, details=None):
+def log_activity(
+    user, action, target_type=None, target_id=None, target_user=None, details=None
+):
     """Helper to log user activities"""
     if details is None:
         details = {}
@@ -15,7 +19,7 @@ def log_activity(user, action, target_type=None, target_id=None, target_user=Non
         target_type=target_type,
         target_id=target_id,
         target_user=target_user,
-        details=details
+        details=details,
     )
 
 
@@ -42,12 +46,11 @@ def is_admin(user):
 
 def can_view_thread(user, thread):
     """Anyone can view published threads"""
-    if thread.status == 'published':
+    if thread.status == "published":
         return True
     # Hidden/Deleted threads: only author, moderators, and admins
-    if thread.status in ['hidden', 'deleted']:
-        return (user.is_authenticated and 
-                (thread.author == user or is_moderator(user)))
+    if thread.status in ["hidden", "deleted"]:
+        return user.is_authenticated and (thread.author == user or is_moderator(user))
     return False
 
 
@@ -97,8 +100,11 @@ def can_view_user_profile(user, target_user):
 
 
 def can_edit_user_profile(user, target_user):
-    """User can only edit own profile"""
-    return user.is_authenticated and user == target_user
+    """User can only edit own profile or admin can edit anyone's"""
+    if not user.is_authenticated:
+        return False
+    # User có thể edit profile của chính họ hoặc admin có thể edit profile bất kỳ ai
+    return user == target_user or is_admin(user)
 
 
 def can_view_user_ip(user, thread_or_comment):
@@ -119,29 +125,39 @@ def can_view_audit_log(user):
 # Decorators for views
 def require_member(view_func):
     """Require authenticated member or higher"""
+
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not is_member(request.user):
-            return redirect('forum:index')
+            return redirect("forum:index")
         return view_func(request, *args, **kwargs)
+
     return wrapper
 
 
 def require_moderator(view_func):
     """Require moderator or admin"""
+
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not is_moderator(request.user):
-            return HttpResponseForbidden("You do not have permission to perform this action.")
+            return HttpResponseForbidden(
+                "You do not have permission to perform this action."
+            )
         return view_func(request, *args, **kwargs)
+
     return wrapper
 
 
 def require_admin(view_func):
     """Require admin"""
+
     @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         if not is_admin(request.user):
-            return HttpResponseForbidden("You do not have permission to perform this action.")
+            return HttpResponseForbidden(
+                "You do not have permission to perform this action."
+            )
         return view_func(request, *args, **kwargs)
+
     return wrapper

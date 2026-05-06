@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block title %}Cài đặt tài khoản{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Page Header -->
+            <div class="mb-4">
+                <h2 class="mb-2">Cài đặt tài khoản</h2>
+                <p class="text-muted">Cập nhật thông tin cá nhân của bạn</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Settings Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Avatar Section -->
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h5 class="mb-3">Ảnh đại diện</h5>
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-3">
+                                    {% if user.avatar %}
+                                        <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="img-fluid rounded-circle" style="max-width: 120px; max-height: 120px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                            <span class="text-muted fs-3">{{ user.username|first|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-3">
+                                        {{ form.avatar }}
+                                        {% if form.avatar.help_text %}
+                                            <small class="form-text text-muted d-block mt-2">{{ form.avatar.help_text|safe }}</small>
+                                        {% endif %}
+                                        {% if form.avatar.errors %}
+                                            <div class="alert alert-danger mt-2">{{ form.avatar.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Basic Info Section -->
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h5 class="mb-3">Thông tin cơ bản</h5>
+
+                            <!-- First Name -->
+                            <div class="mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    Tên
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    Họ
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    Email
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.help_text %}
+                                    <small class="form-text text-muted d-block mt-2">{{ form.email.help_text }}</small>
+                                {% endif %}
+                                {% if form.email.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Bio Section -->
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h5 class="mb-3">Tiểu sử cá nhân</h5>
+                            <div class="mb-3">
+                                <label for="{{ form.bio.id_for_label }}" class="form-label">
+                                    Giới thiệu về bạn
+                                </label>
+                                {{ form.bio }}
+                                {% if form.bio.help_text %}
+                                    <small class="form-text text-muted d-block mt-2">{{ form.bio.help_text }}</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <span id="bio-count">0</span> / 500 ký tự
+                                    </small>
+                                </div>
+                                {% if form.bio.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.bio.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mb-4">
+                                <strong>Lỗi:</strong>
+                                <ul>
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Lưu thay đổi
+                            </button>
+                            <a href="{% url 'forum:user_profile' user.username %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Options -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Tùy chọn khác</h5>
+                    <p class="card-text text-muted">Quản lý các cài đặt bảo mật của bạn</p>
+                    <a href="{% url 'forum:password_change' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-lock"></i> Thay đổi mật khẩu
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bio character counter
+    const bioField = document.getElementById('{{ form.bio.id_for_label }}');
+    const bioCount = document.getElementById('bio-count');
+
+    function updateBioCount() {
+        bioCount.textContent = bioField.value.length;
+    }
+
+    bioField.addEventListener('input', updateBioCount);
+    updateBioCount();
+</script>
+{% endblock %}
