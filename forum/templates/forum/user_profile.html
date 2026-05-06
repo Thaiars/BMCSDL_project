@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}Hồ sơ của {{ target_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Header Profile -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <!-- Avatar -->
+                <div class="col-md-3 text-center">
+                    {% if target_user.avatar %}
+                        <img src="{{ target_user.avatar.url }}" alt="{{ target_user.username }}" class="img-fluid rounded-circle" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                            <span class="text-white fs-1">{{ target_user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- User Info -->
+                <div class="col-md-9">
+                    <h2>{{ target_user.get_display_name }}</h2>
+                    <p class="text-muted">@{{ target_user.username }}</p>
+
+                    <!-- Role Badge -->
+                    <div class="mb-3">
+                        {% if target_user.role == 'admin' %}
+                            <span class="badge bg-danger">Admin</span>
+                        {% elif target_user.role == 'moderator' %}
+                            <span class="badge bg-warning">Moderator</span>
+                        {% else %}
+                            <span class="badge bg-info""">Member</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Bio -->
+                    {% if target_user.bio %}
+                        <p class="card-text">{{ target_user.bio }}</p>
+                    {% else %}
+                        <p class="card-text text-muted"><em>Chưa có tiểu sử</em></p>
+                    {% endif %}
+
+                    <!-- Stats -->
+                    <div class="row text-center mt-4">
+                        <div class="col-sm-4">
+                            <h5>{{ thread_count }}</h5>
+                            <p class="text-muted">Threads</p>
+                        </div>
+                        <div class="col-sm-4">
+                            <h5>{{ comment_count }}</h5>
+                            <p class="text-muted">Comments</p>
+                        </div>
+                        <div class="col-sm-4">
+                            <h5>{{ target_user.date_joined|date:"d/m/Y" }}</h5>
+                            <p class="text-muted">Joined</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    {% if is_own_profile %}
+                        <div class="mt-4">
+                            <a href="{% url 'forum:account_settings' %}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Cập nhật hồ sơ
+                            </a>
+                            <a href="{% url 'forum:password_change' %}" class="btn btn-secondary">
+                                <i class="fas fa-lock"></i> Thay đổi mật khẩu
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Threads -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Threads gần đây ({{ thread_count }} tổng cộng)</h4>
+        </div>
+        <div class="card-body">
+            {% if user_threads %}
+                <div class="list-group">
+                    {% for thread in user_threads %}
+                        <a href="{% url 'forum:detail' thread.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ thread.title }}</h6>
+                                <small class="text-muted">{{ thread.created_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1 text-truncate">{{ thread.content|truncatewords:15 }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-comments"></i> {{ thread.comments.count }} bình luận
+                            </small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">
+                    <em>Chưa có thread nào được xuất bản</em>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-4">
+        <a href="{% url 'forum:index' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+{% endblock %}

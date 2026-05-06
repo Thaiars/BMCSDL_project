@@ -1,0 +1,2813 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: .venv, **/__pycache__/, staticfiles/, media/, *.db, *.sqlite3, node_modules/, *.md, *.txt
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+forum/
+  migrations/
+    __init__.py
+    0001_initial.py
+    0002_comment_image_comment_parent_thread_image.py
+    0003_alter_activitylog_options_remove_activitylog_target_and_more.py
+  static/
+    forum/
+      theme.css
+  templates/
+    forum/
+      account_settings.html
+      create_thread.html
+      detail.html
+      index.html
+      password_change.html
+      user_profile.html
+    registration/
+      login.html
+      signup.html
+    base.html
+  tests/
+    __init__.py
+    test_models.py
+    test_views.py
+  __init__.py
+  admin.py
+  apps.py
+  forms.py
+  models.py
+  permissions.py
+  urls.py
+  views.py
+mini_forum/
+  __init__.py
+  settings.py
+  urls.py
+  wsgi.py
+tests/
+  verify_thread_flow.py
+create_test_accounts.py
+manage.py
+Procfile
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="forum/templates/forum/account_settings.html">
+{% extends "base.html" %}
+
+{% block title %}Cài đặt tài khoản{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <!-- Page Header -->
+            <div class="mb-4">
+                <h2 class="mb-2">Cài đặt tài khoản</h2>
+                <p class="text-muted">Cập nhật thông tin cá nhân của bạn</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Settings Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+
+                        <!-- Avatar Section -->
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h5 class="mb-3">Ảnh đại diện</h5>
+                            <div class="row">
+                                <div class="col-md-3 text-center mb-3">
+                                    {% if user.avatar %}
+                                        <img src="{{ user.avatar.url }}" alt="{{ user.username }}" class="img-fluid rounded-circle" style="max-width: 120px; max-height: 120px; object-fit: cover;">
+                                    {% else %}
+                                        <div class="bg-light rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 120px; height: 120px;">
+                                            <span class="text-muted fs-3">{{ user.username|first|upper }}</span>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="mb-3">
+                                        {{ form.avatar }}
+                                        {% if form.avatar.help_text %}
+                                            <small class="form-text text-muted d-block mt-2">{{ form.avatar.help_text|safe }}</small>
+                                        {% endif %}
+                                        {% if form.avatar.errors %}
+                                            <div class="alert alert-danger mt-2">{{ form.avatar.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Basic Info Section -->
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h5 class="mb-3">Thông tin cơ bản</h5>
+
+                            <!-- First Name -->
+                            <div class="mb-3">
+                                <label for="{{ form.first_name.id_for_label }}" class="form-label">
+                                    Tên
+                                </label>
+                                {{ form.first_name }}
+                                {% if form.first_name.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.first_name.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="mb-3">
+                                <label for="{{ form.last_name.id_for_label }}" class="form-label">
+                                    Họ
+                                </label>
+                                {{ form.last_name }}
+                                {% if form.last_name.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.last_name.errors }}</div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Email -->
+                            <div class="mb-3">
+                                <label for="{{ form.email.id_for_label }}" class="form-label">
+                                    Email
+                                </label>
+                                {{ form.email }}
+                                {% if form.email.help_text %}
+                                    <small class="form-text text-muted d-block mt-2">{{ form.email.help_text }}</small>
+                                {% endif %}
+                                {% if form.email.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.email.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Bio Section -->
+                        <div class="mb-4 pb-4 border-bottom">
+                            <h5 class="mb-3">Tiểu sử cá nhân</h5>
+                            <div class="mb-3">
+                                <label for="{{ form.bio.id_for_label }}" class="form-label">
+                                    Giới thiệu về bạn
+                                </label>
+                                {{ form.bio }}
+                                {% if form.bio.help_text %}
+                                    <small class="form-text text-muted d-block mt-2">{{ form.bio.help_text }}</small>
+                                {% endif %}
+                                <div class="mt-2">
+                                    <small class="text-muted">
+                                        <span id="bio-count">0</span> / 500 ký tự
+                                    </small>
+                                </div>
+                                {% if form.bio.errors %}
+                                    <div class="alert alert-danger mt-2">{{ form.bio.errors }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mb-4">
+                                <strong>Lỗi:</strong>
+                                <ul>
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Lưu thay đổi
+                            </button>
+                            <a href="{% url 'forum:user_profile' user.username %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Additional Options -->
+            <div class="card mt-4">
+                <div class="card-body">
+                    <h5 class="card-title">Tùy chọn khác</h5>
+                    <p class="card-text text-muted">Quản lý các cài đặt bảo mật của bạn</p>
+                    <a href="{% url 'forum:password_change' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-lock"></i> Thay đổi mật khẩu
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Bio character counter
+    const bioField = document.getElementById('{{ form.bio.id_for_label }}');
+    const bioCount = document.getElementById('bio-count');
+
+    function updateBioCount() {
+        bioCount.textContent = bioField.value.length;
+    }
+
+    bioField.addEventListener('input', updateBioCount);
+    updateBioCount();
+</script>
+{% endblock %}
+</file>
+
+<file path="forum/templates/forum/password_change.html">
+{% extends "base.html" %}
+
+{% block title %}Thay đổi mật khẩu{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <!-- Page Header -->
+            <div class="mb-4">
+                <h2 class="mb-2">Thay đổi mật khẩu</h2>
+                <p class="text-muted">Cập nhật mật khẩu để bảo mật tài khoản của bạn</p>
+            </div>
+
+            <!-- Messages -->
+            {% if messages %}
+                <div class="mb-4">
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+
+            <!-- Password Change Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <!-- Old Password -->
+                        <div class="mb-3">
+                            <label for="{{ form.old_password.id_for_label }}" class="form-label">
+                                Mật khẩu hiện tại
+                            </label>
+                            {{ form.old_password }}
+                            {% if form.old_password.help_text %}
+                                <small class="form-text text-muted d-block mt-2">{{ form.old_password.help_text|safe }}</small>
+                            {% endif %}
+                            {% if form.old_password.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    <ul class="mb-0">
+                                        {% for error in form.old_password.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- New Password -->
+                        <div class="mb-3">
+                            <label for="{{ form.new_password1.id_for_label }}" class="form-label">
+                                Mật khẩu mới
+                            </label>
+                            {{ form.new_password1 }}
+                            {% if form.new_password1.help_text %}
+                                <small class="form-text text-muted d-block mt-2">{{ form.new_password1.help_text|safe }}</small>
+                            {% endif %}
+                            {% if form.new_password1.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    <ul class="mb-0">
+                                        {% for error in form.new_password1.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Confirm New Password -->
+                        <div class="mb-4">
+                            <label for="{{ form.new_password2.id_for_label }}" class="form-label">
+                                Xác nhận mật khẩu mới
+                            </label>
+                            {{ form.new_password2 }}
+                            {% if form.new_password2.help_text %}
+                                <small class="form-text text-muted d-block mt-2">{{ form.new_password2.help_text|safe }}</small>
+                            {% endif %}
+                            {% if form.new_password2.errors %}
+                                <div class="alert alert-danger mt-2">
+                                    <ul class="mb-0">
+                                        {% for error in form.new_password2.errors %}
+                                            <li>{{ error }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mb-4">
+                                <strong>Lỗi:</strong>
+                                <ul class="mb-0">
+                                    {% for error in form.non_field_errors %}
+                                        <li>{{ error }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endif %}
+
+                        <!-- Buttons -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Cập nhật mật khẩu
+                            </button>
+                            <a href="{% url 'forum:account_settings' %}" class="btn btn-outline-secondary">
+                                <i class="fas fa-times"></i> Hủy
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="alert alert-info mt-4">
+                <h6 class="alert-heading">
+                    <i class="fas fa-info-circle"></i> Yêu cầu mật khẩu an toàn
+                </h6>
+                <ul class="mb-0">
+                    <li>Không được giống như các thông tin cá nhân của bạn</li>
+                    <li>Phải có ít nhất 8 ký tự</li>
+                    <li>Không được là mật khẩu quá phổ biến</li>
+                    <li>Không được chỉ là số</li>
+                </ul>
+            </div>
+
+            <!-- Back Link -->
+            <div class="mt-4">
+                <a href="{% url 'forum:user_profile' request.user.username %}" class="btn btn-outline-secondary w-100">
+                    <i class="fas fa-arrow-left"></i> Quay lại hồ sơ
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+</file>
+
+<file path="forum/templates/forum/user_profile.html">
+{% extends "base.html" %}
+
+{% block title %}Hồ sơ của {{ target_user.username }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <!-- Header Profile -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row align-items-center">
+                <!-- Avatar -->
+                <div class="col-md-3 text-center">
+                    {% if target_user.avatar %}
+                        <img src="{{ target_user.avatar.url }}" alt="{{ target_user.username }}" class="img-fluid rounded-circle" style="max-width: 150px; max-height: 150px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 150px; height: 150px;">
+                            <span class="text-white fs-1">{{ target_user.username|first|upper }}</span>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- User Info -->
+                <div class="col-md-9">
+                    <h2>{{ target_user.get_display_name }}</h2>
+                    <p class="text-muted">@{{ target_user.username }}</p>
+
+                    <!-- Role Badge -->
+                    <div class="mb-3">
+                        {% if target_user.role == 'admin' %}
+                            <span class="badge bg-danger">Admin</span>
+                        {% elif target_user.role == 'moderator' %}
+                            <span class="badge bg-warning">Moderator</span>
+                        {% else %}
+                            <span class="badge bg-info""">Member</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Bio -->
+                    {% if target_user.bio %}
+                        <p class="card-text">{{ target_user.bio }}</p>
+                    {% else %}
+                        <p class="card-text text-muted"><em>Chưa có tiểu sử</em></p>
+                    {% endif %}
+
+                    <!-- Stats -->
+                    <div class="row text-center mt-4">
+                        <div class="col-sm-4">
+                            <h5>{{ thread_count }}</h5>
+                            <p class="text-muted">Threads</p>
+                        </div>
+                        <div class="col-sm-4">
+                            <h5>{{ comment_count }}</h5>
+                            <p class="text-muted">Comments</p>
+                        </div>
+                        <div class="col-sm-4">
+                            <h5>{{ target_user.date_joined|date:"d/m/Y" }}</h5>
+                            <p class="text-muted">Joined</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    {% if is_own_profile %}
+                        <div class="mt-4">
+                            <a href="{% url 'forum:account_settings' %}" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Cập nhật hồ sơ
+                            </a>
+                            <a href="{% url 'forum:password_change' %}" class="btn btn-secondary">
+                                <i class="fas fa-lock"></i> Thay đổi mật khẩu
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Threads -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="mb-0">Threads gần đây ({{ thread_count }} tổng cộng)</h4>
+        </div>
+        <div class="card-body">
+            {% if user_threads %}
+                <div class="list-group">
+                    {% for thread in user_threads %}
+                        <a href="{% url 'forum:detail' thread.id %}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">{{ thread.title }}</h6>
+                                <small class="text-muted">{{ thread.created_at|date:"d/m/Y H:i" }}</small>
+                            </div>
+                            <p class="mb-1 text-truncate">{{ thread.content|truncatewords:15 }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-comments"></i> {{ thread.comments.count }} bình luận
+                            </small>
+                        </a>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-muted text-center py-4">
+                    <em>Chưa có thread nào được xuất bản</em>
+                </p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Back Button -->
+    <div class="mt-4">
+        <a href="{% url 'forum:index' %}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+{% endblock %}
+</file>
+
+<file path="forum/forms.py">
+from django import forms
+from django.contrib.auth.forms import PasswordChangeForm, UserCreationForm
+
+from .models import Comment, Thread, User
+
+
+class ThreadForm(forms.ModelForm):
+    """Form để tạo/sửa Thread"""
+
+    class Meta:
+        model = Thread
+        fields = ["title", "content", "image"]
+        widgets = {
+            "title": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Thread title"}
+            ),
+            "content": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 6,
+                    "placeholder": "Write your thread content...",
+                }
+            ),
+        }
+
+
+class CommentForm(forms.ModelForm):
+    """Form để tạo/sửa Comment"""
+
+    class Meta:
+        model = Comment
+        fields = ["content", "image"]
+        widgets = {
+            "content": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 3,
+                    "placeholder": "Write a comment (optional)...",
+                }
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # allow image-only comments by making content optional on the form level
+        self.fields["content"].required = False
+
+
+class AccountSettingsForm(forms.ModelForm):
+    """
+    Form để cập nhật thông tin cá nhân của user
+    Cho phép sửa: first_name, last_name, email, bio, avatar
+    """
+
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={"class": "form-control"}),
+        help_text="Địa chỉ email của bạn",
+    )
+
+    class Meta:
+        model = User
+        fields = ["first_name", "last_name", "email", "bio", "avatar"]
+        widgets = {
+            "first_name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Tên"}
+            ),
+            "last_name": forms.TextInput(
+                attrs={"class": "form-control", "placeholder": "Họ"}
+            ),
+            "bio": forms.Textarea(
+                attrs={
+                    "class": "form-control",
+                    "rows": 4,
+                    "placeholder": "Viết một chút về bạn (tối đa 500 ký tự)...",
+                    "maxlength": "500",
+                }
+            ),
+            "avatar": forms.FileInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": "image/png, image/jpeg, image/gif, image/webp",
+                }
+            ),
+        }
+        help_texts = {
+            "first_name": "Tên của bạn",
+            "last_name": "Họ của bạn",
+            "bio": "Tiểu sử cá nhân (tối đa 500 ký tự)",
+            "avatar": "Ảnh đại diện (PNG, JPEG, GIF, WebP)",
+        }
+
+    def clean_email(self):
+        """
+        Validate email: kiểm tra xem email đã được sử dụng bởi user khác chưa
+        """
+        email = self.cleaned_data.get("email")
+        user_id = self.instance.id
+
+        # Kiểm tra xem có user nào khác dùng email này không
+        if User.objects.filter(email=email).exclude(id=user_id).exists():
+            raise forms.ValidationError(
+                "Email này đã được sử dụng bởi người khác. Vui lòng chọn email khác."
+            )
+        return email
+
+    def clean_bio(self):
+        """
+        Validate bio: kiểm tra độ dài
+        """
+        bio = self.cleaned_data.get("bio", "")
+        if len(bio) > 500:
+            raise forms.ValidationError(
+                f"Tiểu sử không được vượt quá 500 ký tự. Hiện tại: {len(bio)} ký tự."
+            )
+        return bio
+
+
+class AvatarUploadForm(forms.ModelForm):
+    """
+    Form chuyên biệt chỉ để upload avatar
+    Đơn giản hơn AccountSettingsForm, chỉ tập trung vào avatar
+    """
+
+    class Meta:
+        model = User
+        fields = ["avatar"]
+        widgets = {
+            "avatar": forms.FileInput(
+                attrs={
+                    "class": "form-control",
+                    "accept": "image/png, image/jpeg, image/gif, image/webp",
+                }
+            ),
+        }
+        help_texts = {
+            "avatar": "Chọn ảnh mới cho hồ sơ (PNG, JPEG, GIF, WebP)",
+        }
+
+    def clean_avatar(self):
+        """
+        Validate avatar: kiểm tra kích cỡ file
+        Giới hạn: 5MB
+        """
+        avatar = self.cleaned_data.get("avatar")
+        if avatar:
+            # Kiểm tra kích cỡ file (5MB = 5242880 bytes)
+            if avatar.size > 5 * 1024 * 1024:
+                raise forms.ValidationError(
+                    f"Kích cỡ ảnh không được vượt quá 5MB. Ảnh của bạn: {avatar.size / (1024 * 1024):.2f}MB"
+                )
+        return avatar
+
+
+class CustomUserCreationForm(UserCreationForm):
+    """
+    Form đăng ký tài khoản mở rộng với email, first_name, last_name
+    Tự động set role='member' khi signup
+    Validate email không trùng
+    """
+
+    email = forms.EmailField(
+        required=True,
+        label="Email",
+        widget=forms.EmailInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "example@email.com",
+                "autocomplete": "email",
+            }
+        ),
+        help_text="Địa chỉ email của bạn (phải duy nhất)",
+    )
+
+    first_name = forms.CharField(
+        required=False,
+        label="Tên",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Tên của bạn",
+                "autocomplete": "given-name",
+            }
+        ),
+    )
+
+    last_name = forms.CharField(
+        required=False,
+        label="Họ",
+        widget=forms.TextInput(
+            attrs={
+                "class": "form-control",
+                "placeholder": "Họ của bạn",
+                "autocomplete": "family-name",
+            }
+        ),
+    )
+
+    class Meta:
+        model = User
+        fields = (
+            "username",
+            "email",
+            "first_name",
+            "last_name",
+            "password1",
+            "password2",
+        )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Apply Bootstrap CSS class to all fields
+        for field_name, field in self.fields.items():
+            if field_name not in ["email", "first_name", "last_name"]:
+                field.widget.attrs.update({"class": "form-control"})
+
+        # Add help text cho username
+        if "username" in self.fields:
+            self.fields[
+                "username"
+            ].help_text = "Tối đa 150 ký tự. Chỉ chữ, số và @/./+/-/_"
+            self.fields["username"].widget.attrs.update(
+                {"placeholder": "Username của bạn", "autocomplete": "username"}
+            )
+
+        # Add help text cho password fields
+        if "password1" in self.fields:
+            self.fields["password1"].widget.attrs.update(
+                {"placeholder": "Nhập mật khẩu", "autocomplete": "new-password"}
+            )
+        if "password2" in self.fields:
+            self.fields["password2"].widget.attrs.update(
+                {"placeholder": "Xác nhận mật khẩu", "autocomplete": "new-password"}
+            )
+
+    def clean_email(self):
+        """
+        Validate email: kiểm tra xem email đã được sử dụng chưa
+        """
+        email = self.cleaned_data.get("email")
+        if User.objects.filter(email=email).exists():
+            raise forms.ValidationError(
+                "Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc "
+                "<a href='/accounts/login/'>đăng nhập</a> nếu bạn đã có tài khoản."
+            )
+        return email
+
+    def clean_username(self):
+        """
+        Validate username: thêm kiểm tra xem username đã được sử dụng chưa
+        """
+        username = self.cleaned_data.get("username")
+        if User.objects.filter(username=username).exists():
+            raise forms.ValidationError(
+                "Username này đã tồn tại. Vui lòng chọn username khác."
+            )
+        return username
+
+    def save(self, commit=True):
+        """
+        Save user và tự động set role='member'
+        """
+        user = super().save(commit=False)
+        # Auto-set role to 'member' for new signups
+        user.role = User.ROLE_MEMBER
+        if commit:
+            user.save()
+        return user
+
+
+class CustomPasswordChangeForm(PasswordChangeForm):
+    """
+    Form thay đổi mật khẩu với CSS class tùy chỉnh
+    Thừa kế từ Django's PasswordChangeForm
+    """
+
+    old_password = forms.CharField(
+        label="Mật khẩu hiện tại",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "autocomplete": "current-password"}
+        ),
+    )
+    new_password1 = forms.CharField(
+        label="Mật khẩu mới",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "autocomplete": "new-password"}
+        ),
+        help_text="Mật khẩu phải đủ mạnh",
+    )
+    new_password2 = forms.CharField(
+        label="Xác nhận mật khẩu mới",
+        strip=False,
+        widget=forms.PasswordInput(
+            attrs={"class": "form-control", "autocomplete": "new-password"}
+        ),
+    )
+</file>
+
+<file path="forum/migrations/__init__.py">
+
+</file>
+
+<file path="forum/migrations/0001_initial.py">
+# Generated by Django 4.2.30 on 2026-04-29 02:38
+
+from django.conf import settings
+import django.contrib.auth.models
+import django.contrib.auth.validators
+from django.db import migrations, models
+import django.db.models.deletion
+import django.utils.timezone
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+
+    dependencies = [
+        ('auth', '0012_alter_user_first_name_max_length'),
+    ]
+
+    operations = [
+        migrations.CreateModel(
+            name='User',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('password', models.CharField(max_length=128, verbose_name='password')),
+                ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
+                ('is_superuser', models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.', verbose_name='superuser status')),
+                ('username', models.CharField(error_messages={'unique': 'A user with that username already exists.'}, help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, unique=True, validators=[django.contrib.auth.validators.UnicodeUsernameValidator()], verbose_name='username')),
+                ('first_name', models.CharField(blank=True, max_length=150, verbose_name='first name')),
+                ('last_name', models.CharField(blank=True, max_length=150, verbose_name='last name')),
+                ('email', models.EmailField(blank=True, max_length=254, verbose_name='email address')),
+                ('is_staff', models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')),
+                ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
+                ('date_joined', models.DateTimeField(default=django.utils.timezone.now, verbose_name='date joined')),
+                ('role', models.CharField(choices=[('guest', 'Guest'), ('member', 'Member'), ('moderator', 'Moderator'), ('admin', 'Admin')], default='member', max_length=16)),
+                ('groups', models.ManyToManyField(blank=True, help_text='The groups this user belongs to. A user will get all permissions granted to each of their groups.', related_name='user_set', related_query_name='user', to='auth.group', verbose_name='groups')),
+                ('user_permissions', models.ManyToManyField(blank=True, help_text='Specific permissions for this user.', related_name='user_set', related_query_name='user', to='auth.permission', verbose_name='user permissions')),
+            ],
+            options={
+                'verbose_name': 'user',
+                'verbose_name_plural': 'users',
+                'abstract': False,
+            },
+            managers=[
+                ('objects', django.contrib.auth.models.UserManager()),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Thread',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('title', models.CharField(max_length=255)),
+                ('content', models.TextField()),
+                ('status', models.CharField(choices=[('published', 'Published'), ('hidden', 'Hidden'), ('deleted', 'Deleted')], default='published', max_length=16)),
+                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='threads', to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Report',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('report_type', models.CharField(choices=[('thread', 'Thread'), ('comment', 'Comment')], max_length=16)),
+                ('object_id', models.PositiveIntegerField()),
+                ('reason', models.TextField(blank=True)),
+                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                ('resolved', models.BooleanField(default=False)),
+                ('reporter', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='reports', to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+        migrations.CreateModel(
+            name='Comment',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('content', models.TextField()),
+                ('status', models.CharField(choices=[('published', 'Published'), ('hidden', 'Hidden'), ('deleted', 'Deleted')], default='published', max_length=16)),
+                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                ('updated_at', models.DateTimeField(auto_now=True)),
+                ('author', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to=settings.AUTH_USER_MODEL)),
+                ('thread', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='comments', to='forum.thread')),
+            ],
+        ),
+        migrations.CreateModel(
+            name='ActivityLog',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('action', models.CharField(max_length=255)),
+                ('target', models.CharField(blank=True, max_length=255)),
+                ('created_at', models.DateTimeField(default=django.utils.timezone.now)),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to=settings.AUTH_USER_MODEL)),
+            ],
+        ),
+    ]
+</file>
+
+<file path="forum/migrations/0002_comment_image_comment_parent_thread_image.py">
+# Generated by Django 4.2.30 on 2026-05-02 14:15
+
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('forum', '0001_initial'),
+    ]
+
+    operations = [
+        migrations.AddField(
+            model_name='comment',
+            name='image',
+            field=models.ImageField(blank=True, null=True, upload_to='comments/'),
+        ),
+        migrations.AddField(
+            model_name='comment',
+            name='parent',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='replies', to='forum.comment'),
+        ),
+        migrations.AddField(
+            model_name='thread',
+            name='image',
+            field=models.ImageField(blank=True, null=True, upload_to='threads/'),
+        ),
+    ]
+</file>
+
+<file path="forum/migrations/0003_alter_activitylog_options_remove_activitylog_target_and_more.py">
+# Generated by Django 4.2.30 on 2026-05-03 03:02
+
+from django.conf import settings
+from django.db import migrations, models
+import django.db.models.deletion
+
+
+class Migration(migrations.Migration):
+
+    dependencies = [
+        ('forum', '0002_comment_image_comment_parent_thread_image'),
+    ]
+
+    operations = [
+        migrations.AlterModelOptions(
+            name='activitylog',
+            options={'ordering': ['-created_at']},
+        ),
+        migrations.RemoveField(
+            model_name='activitylog',
+            name='target',
+        ),
+        migrations.AddField(
+            model_name='activitylog',
+            name='details',
+            field=models.JSONField(blank=True, default=dict),
+        ),
+        migrations.AddField(
+            model_name='activitylog',
+            name='target_id',
+            field=models.PositiveIntegerField(blank=True, null=True),
+        ),
+        migrations.AddField(
+            model_name='activitylog',
+            name='target_type',
+            field=models.CharField(blank=True, max_length=32),
+        ),
+        migrations.AddField(
+            model_name='activitylog',
+            name='target_user',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='target_activity_logs', to=settings.AUTH_USER_MODEL),
+        ),
+        migrations.AlterField(
+            model_name='activitylog',
+            name='action',
+            field=models.CharField(choices=[('thread_create', 'Thread Created'), ('thread_delete', 'Thread Deleted'), ('thread_hide', 'Thread Hidden'), ('comment_create', 'Comment Created'), ('comment_delete', 'Comment Deleted'), ('comment_hide', 'Comment Hidden'), ('user_update', 'User Info Updated'), ('role_change', 'User Role Changed'), ('report_filed', 'Report Filed')], max_length=32),
+        ),
+        migrations.AlterField(
+            model_name='activitylog',
+            name='user',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='activity_logs', to=settings.AUTH_USER_MODEL),
+        ),
+        migrations.AddIndex(
+            model_name='activitylog',
+            index=models.Index(fields=['-created_at'], name='forum_activ_created_ed5279_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='activitylog',
+            index=models.Index(fields=['user', '-created_at'], name='forum_activ_user_id_58de53_idx'),
+        ),
+    ]
+</file>
+
+<file path="forum/static/forum/theme.css">
+:root{
+  --brand-teal: #0b1467; /* main teal */
+  --brand-dark: #8681cc;
+  --muted: #6c757d;
+}
+
+body{
+  background-color: #ffffff;
+  color: #1f2937;
+}
+
+.navbar{
+  background: linear-gradient(180deg, #ffffff, #fbfeff);
+  border-bottom: 1px solid #e9f5f3;
+}
+
+.navbar-brand{
+  color: var(--brand-dark) !important;
+  font-weight: 600;
+}
+
+.nav-link{
+  color: var(--muted) !important;
+}
+
+.btn-primary{
+  background-color: var(--brand-teal);
+  border-color: var(--brand-teal);
+}
+.btn-primary:hover{
+  background-color: var(--brand-dark);
+  border-color: var(--brand-dark);
+}
+
+main.container{
+  max-width: 900px;
+}
+
+.card-soft{
+  background: #ffffff;
+  border: 1px solid #eaf7f5;
+  box-shadow: 0 1px 2px rgba(13,148,136,0.04);
+  border-radius: .5rem;
+  padding: 1rem;
+}
+
+.list-group-item{
+  border: 1px solid #f0fbfa;
+}
+
+.thread-title{
+  color: var(--brand-dark);
+  font-weight: 600;
+}
+
+.small-muted{ color: #88919a; }
+
+footer.site-footer{
+  margin-top: 3rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid #eef8f7;
+  color: #6b7275;
+}
+
+/* Form controls fallback styling so Django default widgets look good */
+.card-soft input[type="text"],
+.card-soft input[type="search"],
+.card-soft input[type="password"],
+.card-soft input[type="email"],
+.card-soft textarea,
+.card-soft select {
+  display: block;
+  width: 100%;
+  padding: .5rem .75rem;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #d6f0ec;
+  border-radius: .375rem;
+  transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+}
+.card-soft textarea { min-height: 120px; }
+.card-soft input:focus, .card-soft textarea:focus {
+  border-color: var(--brand-teal);
+  box-shadow: 0 0 0 .15rem rgba(13,148,136,0.08);
+  outline: 0;
+}
+
+.btn-secondary {
+  background-color: #f8faf9;
+  color: var(--brand-dark);
+  border: 1px solid #e6f2f0;
+}
+
+.thread-meta { color: #667781; font-size: .95rem; }
+
+/* Inline reply / comment action icons */
+.comment-actions a { text-decoration: none; font-size: 1.05rem; }
+.reply-area { margin-top: .5rem; }
+.reply-inline-form .btn-sm { padding: .25rem .5rem; }
+.reply-inline-form textarea { min-height: 60px; }
+.comment-actions a:hover { color: var(--brand-teal); }
+
+/* hide default file input when using icon trigger */
+.d-none { display: none !important; }
+
+/* delete button small style */
+.btn-link.text-danger { color: #d9534f; }
+.btn-link.text-danger:hover { color: #b52b26; text-decoration: none; }
+
+/* image preview styles */
+.reply-image-preview { display: block; margin-top: .5rem; max-height: 180px; }
+.main-image-preview { display: block; margin-left: .5rem; max-height: 360px; }
+.remove-reply-image { vertical-align: middle; }
+
+/* SVG icon sizing and color */
+.icon-svg { width: 16px; height: 16px; vertical-align: text-bottom; color: #88919a; }
+.comment-actions .icon-svg { margin-right: 2px; }
+.icon-svg:hover { color: var(--brand-teal); }
+
+/* visually hide file inputs (off-screen) so .click() opens file picker */
+.file-offscreen { position: absolute !important; left: -9999px !important; width: 1px !important; height: 1px !important; overflow: hidden !important; }
+
+/* textarea container with inline icon */
+.textarea-with-icon { position: relative; }
+.textarea-with-icon .textarea-icon { position: absolute; right: 8px; bottom: 10px; cursor: pointer; z-index: 5; display: inline-flex; align-items: center; justify-content: center; color: #88919a; }
+.textarea-with-icon .textarea-icon:hover { color: var(--brand-teal); }
+.textarea-with-icon textarea { padding-right: 44px; }
+</file>
+
+<file path="forum/templates/forum/create_thread.html">
+{% extends 'base.html' %}
+
+{% block title %}Create Thread{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-10">
+      <h1>Create Thread</h1>
+      <form method="post" enctype="multipart/form-data">{% csrf_token %}
+        <div class="mb-3">{{ form.title.label_tag }} {{ form.title }}</div>
+        <div class="mb-3">{{ form.content.label_tag }} {{ form.content }}</div>
+        <div class="mb-3">{{ form.image.label_tag }} {{ form.image }}</div>
+        <div class="d-flex gap-2">
+          <button class="btn btn-primary" type="submit">Create</button>
+          <a class="btn btn-secondary" href="{% url 'forum:index' %}">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+</file>
+
+<file path="forum/templates/forum/detail.html">
+<!doctype html>
+{% extends 'base.html' %}
+
+{% block title %}{{ thread.title }}{% endblock %}
+
+{% block content %}
+  <div class="mb-3">
+    <div class="d-flex align-items-start">
+      <h1 class="thread-title me-3">{{ thread.title }}</h1>
+      {% if user.is_authenticated %}
+        {% if thread.author == user or user.role == 'moderator' or user.role == 'admin' %}
+          <form method="post" action="{% url 'forum:delete_thread' thread.id %}" class="d-inline">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="Delete thread">
+              <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+            </button>
+          </form>
+        {% endif %}
+      {% endif %}
+    </div>
+    <div class="thread-meta mb-2">By <strong>{{ thread.author }}</strong> — {{ thread.created_at }}</div>
+    {% if thread.image %}
+      <div class="mb-3">
+        <img src="{{ thread.image.url }}" alt="thread image" class="img-fluid rounded">
+      </div>
+    {% endif %}
+    <div class="mb-4">{{ thread.content }}</div>
+  </div>
+
+  <h3>Comments</h3>
+  <div class="mb-3">
+    {% for c in comments %}
+      <div class="card mb-2">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div><strong>{{ c.author }}</strong></div>
+            <small class="small-muted">{{ c.created_at }}</small>
+          </div>
+          <div class="mt-2">{{ c.content }}</div>
+          {% if c.image %}
+            <div class="mt-2"><img src="{{ c.image.url }}" alt="comment image" class="img-fluid rounded" style="max-width:360px"></div>
+          {% endif %}
+          <div class="mt-2 d-flex align-items-center comment-actions">
+            <a href="?reply_to={{ c.id }}#reply-area-{{ c.id }}" class="reply-toggle small-muted" data-id="{{ c.id }}" aria-label="Reply">
+              <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="10 19 4 12 10 5"></polyline><path d="M20 19v-2a4 4 0 0 0-4-4H7"></path></svg>
+            </a>
+            <!-- image icon moved into the reply textarea for inline placement -->
+            {% if user.is_authenticated %}
+              {% if c.author == user or user.is_superuser %}
+                <form method="post" action="{% url 'forum:delete_comment' c.id %}" class="d-inline ms-3">{% csrf_token %}
+                  <button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="Delete comment">
+                    <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                  </button>
+                </form>
+              {% endif %}
+            {% endif %}
+          </div>
+
+          <div id="reply-area-{{ c.id }}" class="reply-area mt-2" style="display: {% if reply_to == c.id %}block{% else %}none{% endif %};">
+            <form method="post" action="{% url 'forum:detail' thread.id %}" enctype="multipart/form-data" class="reply-inline-form">{% csrf_token %}
+              <div class="mb-2 textarea-with-icon position-relative">
+                <textarea name="content" class="form-control" rows="2" placeholder="Write a reply (optional)..."></textarea>
+                <a href="?reply_to={{ c.id }}#reply-area-{{ c.id }}" class="image-trigger textarea-icon small-muted" data-id="{{ c.id }}" aria-label="Add image">
+                  <svg class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L3 21"></path></svg>
+                </a>
+              </div>
+              <div class="mb-2 d-flex align-items-center">
+                <input type="file" name="image" id="reply-image-{{ c.id }}" class="file-offscreen" accept="image/*">
+                <img id="reply-preview-{{ c.id }}" class="reply-image-preview img-fluid rounded d-none mt-2" style="max-width:200px; display:none">
+                <button type="button" class="btn btn-sm btn-outline-secondary ms-2 remove-reply-image d-none" data-id="{{ c.id }}">Remove</button>
+                <input type="hidden" name="parent_id" value="{{ c.id }}">
+                <button type="submit" class="btn btn-sm btn-primary me-2">Reply</button>
+                <button type="button" class="btn btn-sm btn-secondary cancel-reply" data-id="{{ c.id }}">Cancel</button>
+              </div>
+              {% if reply_to == c.id and form.non_field_errors %}
+                {% for err in form.non_field_errors %}
+                  <div class="text-danger">{{ err }}</div>
+                {% endfor %}
+              {% endif %}
+            </form>
+          </div>
+
+          {% for reply in c.replies_qs %}
+            <div class="card mt-3 ms-4">
+              <div class="card-body">
+                <div class="d-flex justify-content-between">
+                  <div><strong>{{ reply.author }}</strong></div>
+                  <small class="small-muted">{{ reply.created_at }}</small>
+                </div>
+                <div class="mt-2">{{ reply.content }}</div>
+                {% if reply.image %}
+                  <div class="mt-2"><img src="{{ reply.image.url }}" alt="reply image" class="img-fluid rounded" style="max-width:300px"></div>
+                {% endif %}
+                <div class="mt-2">
+                  {% if user.is_authenticated %}
+                    {% if reply.author == user or user.is_superuser %}
+                      <form method="post" action="{% url 'forum:delete_comment' reply.id %}" class="d-inline">{% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-link text-danger p-0" aria-label="Delete reply">
+                          <svg class="icon-svg" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6"></path><path d="M14 11v6"></path><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"></path></svg>
+                        </button>
+                      </form>
+                    {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+
+        </div>
+      </div>
+    {% empty %}
+      <div class="list-group-item">No comments</div>
+    {% endfor %}
+  </div>
+
+  {% if user.is_authenticated %}
+    <form id="comment-form" method="post" enctype="multipart/form-data">{% csrf_token %}
+      <div class="mb-3">{{ form.content.label_tag }}</div>
+      <div class="mb-3 textarea-with-icon position-relative">
+        {{ form.content }}
+        <a href="javascript:void(0)" id="main-image-trigger" class="image-trigger textarea-icon small-muted" aria-label="Add image">
+          <svg class="icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><path d="M21 15l-5-5L3 21"></path></svg>
+        </a>
+      </div>
+      <div class="mb-3 d-flex align-items-center">
+        <span class="file-offscreen">{{ form.image }}</span>
+        <img id="main-image-preview" class="main-image-preview img-fluid rounded d-none ms-3" style="max-width:360px; display:none">
+        <button type="button" id="main-remove-image" class="btn btn-sm btn-outline-secondary ms-2 d-none">Remove</button>
+      </div>
+      <input type="hidden" name="parent_id" value="{{ reply_to }}">
+      <button class="btn btn-primary" type="submit">Post comment</button>
+    </form>
+  {% else %}
+    <p><a href="/accounts/login/">Login to comment</a></p>
+  {% endif %}
+
+  <p class="mt-3"><a href="{% url 'forum:index' %}">Back</a></p>
+{% endblock %}
+</html>
+
+<script>
+// Global helper to attach preview handler to reply file inputs
+window.attachReplyPreviewHandler = function(input){
+  if(!input || input._previewAttached) return;
+  input._previewAttached = true;
+  var id = input.id.replace('reply-image-','');
+  var preview = document.getElementById('reply-preview-' + id);
+  var removeBtn = document.querySelector('.remove-reply-image[data-id="' + id + '"]');
+  var lastUrl = null;
+  input.addEventListener('change', function(){
+    var file = input.files && input.files[0];
+    if(file){
+      if(lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = URL.createObjectURL(file);
+      if(preview){ preview.src = lastUrl; preview.style.display = 'block'; preview.classList.remove('d-none'); }
+      if(removeBtn){ removeBtn.classList.remove('d-none'); }
+    } else {
+      if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+      if(removeBtn){ removeBtn.classList.add('d-none'); }
+      if(lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    }
+  });
+  if(removeBtn){
+    removeBtn.addEventListener('click', function(){ input.value = ''; input.dispatchEvent(new Event('change')); });
+  }
+};
+
+// Global helper to attach preview handler to main file input
+window.attachMainPreviewHandler = function(input){
+  if(!input || input._previewAttached) return;
+  input._previewAttached = true;
+  var preview = document.getElementById('main-image-preview');
+  var removeBtn = document.getElementById('main-remove-image');
+  var lastUrl = null;
+  input.addEventListener('change', function(){
+    var file = input.files && input.files[0];
+    if(file){
+      if(lastUrl) URL.revokeObjectURL(lastUrl);
+      lastUrl = URL.createObjectURL(file);
+      if(preview){ preview.src = lastUrl; preview.style.display = 'block'; preview.classList.remove('d-none'); }
+      if(removeBtn){ removeBtn.classList.remove('d-none'); }
+    } else {
+      if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+      if(removeBtn){ removeBtn.classList.add('d-none'); }
+      if(lastUrl){ URL.revokeObjectURL(lastUrl); lastUrl = null; }
+    }
+  });
+  if(removeBtn){
+    removeBtn.addEventListener('click', function(){ input.value = ''; input.dispatchEvent(new Event('change')); });
+  }
+};
+
+// Unified delegated handlers for all interactions
+document.addEventListener('click', function(e){
+  var el = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, #main-image-trigger, .cancel-reply');
+  if(!el) return;
+  
+  // Reply toggle
+  if(el.classList && el.classList.contains('reply-toggle')){
+    e.preventDefault();
+    var id = el.dataset.id;
+    var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    var isOpen = area.style.display === 'block';
+    document.querySelectorAll('.reply-area').forEach(function(a){ if(a.id !== 'reply-area-' + id) a.style.display = 'none'; });
+    if(!isOpen){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; var ta = area.querySelector('textarea'); if(ta) ta.focus(); }
+    else { area.style.display = 'none'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block'; }
+    return;
+  }
+  
+  // Cancel reply
+  if(el.classList && el.classList.contains('cancel-reply')){
+    var id = el.dataset.id; var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    area.style.display = 'none';
+    var ta = area.querySelector('textarea'); if(ta) ta.value = '';
+    var input = area.querySelector('input[type=file]'); if(input){ input.value = ''; input.dispatchEvent(new Event('change')); }
+    var preview = area.querySelector('.reply-image-preview'); if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+    var removeBtn = area.querySelector('.remove-reply-image'); if(removeBtn){ removeBtn.classList.add('d-none'); }
+    var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block';
+    return;
+  }
+  
+  // Image trigger (main or reply)
+  if(el.id === 'main-image-trigger' || (el.classList && el.classList.contains('image-trigger'))){
+    e.preventDefault();
+    if(el.id === 'main-image-trigger'){
+      var mainInput = document.querySelector('#comment-form input[type=file]') || document.getElementById('id_image');
+      if(mainInput){ attachMainPreviewHandler(mainInput); setTimeout(function(){ try{ mainInput.click(); }catch(err){ console.error(err); } }, 10); }
+      else console.warn('[warn] main image input not found');
+      return;
+    }
+    var id = el.dataset.id;
+    var input = document.getElementById('reply-image-' + id);
+    if(!input) input = document.getElementById('reply-area-' + id) && document.getElementById('reply-area-' + id).querySelector('input[type=file]');
+    var area = document.getElementById('reply-area-' + id);
+    if(area){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; }
+    if(input){ attachReplyPreviewHandler(input); setTimeout(function(){ try{ input.click(); }catch(err){ console.error(err); } }, 10); }
+    else console.warn('[warn] reply image input not found for id', id);
+    return;
+  }
+});
+</script>
+
+<script>
+// Delegated handlers: robustly handle reply toggle, image triggers, and cancel even if elements change
+document.addEventListener('click', function(e){
+  var el = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, #main-image-trigger, .cancel-reply');
+  if(!el) return;
+  // Reply toggle
+  if(el.classList && el.classList.contains('reply-toggle')){
+    e.preventDefault();
+    var id = el.dataset.id;
+    var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    var isOpen = area.style.display === 'block';
+    // close others
+    document.querySelectorAll('.reply-area').forEach(function(a){ if(a.id !== 'reply-area-' + id) a.style.display = 'none'; });
+    if(!isOpen){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; var ta = area.querySelector('textarea'); if(ta) ta.focus(); }
+    else { area.style.display = 'none'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block'; }
+    return;
+  }
+
+  // Cancel reply
+  if(el.classList && el.classList.contains('cancel-reply')){
+    var id = el.dataset.id; var area = document.getElementById('reply-area-' + id);
+    if(!area) return;
+    area.style.display = 'none';
+    var ta = area.querySelector('textarea'); if(ta) ta.value = '';
+    var input = area.querySelector('input[type=file]'); if(input){ input.value = ''; input.dispatchEvent(new Event('change')); }
+    var preview = area.querySelector('.reply-image-preview'); if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+    var removeBtn = area.querySelector('.remove-reply-image'); if(removeBtn){ removeBtn.classList.add('d-none'); }
+    var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'block';
+    return;
+  }
+
+  // Image triggers (main or reply)
+  if(el.id === 'main-image-trigger' || (el.classList && el.classList.contains('image-trigger'))){
+    e.preventDefault();
+    if(el.id === 'main-image-trigger'){
+      var mainInput = document.querySelector('#comment-form input[type=file]') || document.getElementById('id_image');
+      attachMainPreviewHandler(mainInput);
+      if(mainInput){ setTimeout(function(){ try{ mainInput.click(); }catch(err){ console.error(err); } }, 50); }
+      else console.warn('[warn] main image input not found');
+      return;
+    }
+    // reply image trigger
+    var id = el.dataset.id;
+    var input = document.getElementById('reply-image-' + id) || (document.getElementById('reply-area-' + id) && document.getElementById('reply-area-' + id).querySelector('input[type=file]'));
+    var area = document.getElementById('reply-area-' + id);
+    if(area){ area.style.display = 'block'; var mainForm = document.getElementById('comment-form'); if(mainForm) mainForm.style.display = 'none'; }
+    if(input){ attachReplyPreviewHandler(input); setTimeout(function(){ try{ input.click(); }catch(err){ console.error(err); } }, 50); }
+    else console.warn('[warn] reply image input not found for id', id);
+    return;
+  }
+});
+</script>
+
+<script>
+// Lightweight debug helpers (no prevention) to capture client-side events
+document.addEventListener('click', function(e){
+  var t = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, .remove-reply-image, #main-image-trigger, .cancel-reply');
+  if(t){
+    console.log('[dbg] click', t.className, t.dataset && t.dataset.id);
+  }
+});
+document.addEventListener('change', function(e){
+  var t = e.target;
+  if(t && t.type === 'file'){
+    console.log('[dbg] file change on', t.id, 'files:', t.files && t.files.length);
+  }
+});
+document.addEventListener('submit', function(e){
+  var f = e.target;
+  if(f && (f.classList && f.classList.contains('reply-inline-form') || f.id === 'comment-form')){
+    console.log('[dbg] form submit', f.className || f.id);
+  }
+});
+</script>
+</file>
+
+<file path="forum/templates/forum/index.html">
+{% extends 'base.html' %}
+
+{% block title %}Mini Forum{% endblock %}
+
+{% block content %}
+  <h1>Threads</h1>
+  <form method="get" action="" class="mb-3">
+    <div class="d-flex flex-column flex-md-row gap-2">
+      <input type="search" name="q" class="form-control flex-grow-1" placeholder="Search threads" value="{{ query }}">
+      <input type="text" name="author" class="form-control" style="max-width:220px;" placeholder="Author username" value="{{ author_q }}">
+      <div>
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </div>
+  </form>
+  <div class="list-group">
+    {% for t in threads.object_list|default:threads %}
+      <a class="list-group-item list-group-item-action" href="{% url 'forum:detail' t.id %}">
+        <div class="d-flex w-100 justify-content-between">
+          <h5 class="mb-1 thread-title">{{ t.title }}</h5>
+          <small class="small-muted">{{ t.created_at }}</small>
+        </div>
+        <p class="mb-1 small-muted">by {{ t.author }}</p>
+      </a>
+    {% empty %}
+      <div class="list-group-item">No threads yet</div>
+    {% endfor %}
+  </div>
+
+  {% if is_paginated %}
+    <nav aria-label="Page navigation" class="mt-3">
+      <ul class="pagination">
+        {% if threads.has_previous %}
+          <li class="page-item"><a class="page-link" href="?page={{ threads.previous_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if author_q %}&author={{ author_q|urlencode }}{% endif %}">Previous</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Previous</span></li>
+        {% endif %}
+
+        {% for num in threads.paginator.page_range %}
+          {% if num == threads.number %}
+            <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+          {% else %}
+            <li class="page-item"><a class="page-link" href="?page={{ num }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if author_q %}&author={{ author_q|urlencode }}{% endif %}">{{ num }}</a></li>
+          {% endif %}
+        {% endfor %}
+
+        {% if threads.has_next %}
+          <li class="page-item"><a class="page-link" href="?page={{ threads.next_page_number }}{% if query %}&q={{ query|urlencode }}{% endif %}{% if author_q %}&author={{ author_q|urlencode }}{% endif %}">Next</a></li>
+        {% else %}
+          <li class="page-item disabled"><span class="page-link">Next</span></li>
+        {% endif %}
+      </ul>
+    </nav>
+  {% endif %}
+{% endblock %}
+</file>
+
+<file path="forum/templates/registration/login.html">
+{% extends 'base.html' %}
+
+{% block title %}Login{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-6">
+      <h1>Login</h1>
+      <form method="post">{% csrf_token %}
+        <div class="mb-3">{{ form.username.label_tag }} {{ form.username }}</div>
+        <div class="mb-3">{{ form.password.label_tag }} {{ form.password }}</div>
+        <button class="btn btn-primary" type="submit">Login</button>
+      </form>
+      <p class="mt-3"><a href="/accounts/signup/">Sign up</a> | <a href="/">Back</a></p>
+    </div>
+  </div>
+{% endblock %}
+</file>
+
+<file path="forum/templates/registration/signup.html">
+{% extends 'base.html' %}
+
+{% block title %}Sign up{% endblock %}
+
+{% block content %}
+  <div class="row justify-content-center">
+    <div class="col-12 col-md-6">
+      <h1>Sign up</h1>
+      <form method="post">{% csrf_token %}
+        {% for field in form %}
+          <div class="mb-3">{{ field.label_tag }} {{ field }}</div>
+        {% endfor %}
+        <button class="btn btn-primary" type="submit">Sign up</button>
+      </form>
+      <p class="mt-3"><a href="/">Back</a> | <a href="/accounts/login/">Login</a></p>
+    </div>
+  </div>
+{% endblock %}
+</file>
+
+<file path="forum/templates/base.html">
+<!doctype html>
+<html>
+    <head>
+        {% load static %}
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>{% block title %}Mini Forum{% endblock %}</title>
+        <link
+            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+            rel="stylesheet"
+        />
+        <link href="{% static 'forum/theme.css' %}" rel="stylesheet" />
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="/">Mini Forum</a>
+                <button
+                    class="navbar-toggler"
+                    type="button"
+                    data-bs-toggle="collapse"
+                    data-bs-target="#navMain"
+                >
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navMain">
+                    <ul class="navbar-nav ms-auto align-items-center">
+                        {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="nav-link"
+                                >{{ user.first_name|default:user.username }}
+                                <small
+                                    >({{ user.get_role_display }})</small
+                                ></span
+                            >
+                        </li>
+                        {% if user.role == 'member' or user.role == 'moderator'
+                        or user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/threads/create/"
+                                >Create</a
+                            >
+                        </li>
+                        {% endif %}
+                        <!-- User Profile Links -->
+                        <li class="nav-item">
+                            <a
+                                class="nav-link"
+                                href="{% url 'forum:user_profile' user.username %}"
+                                >Profile</a
+                            >
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a
+                                class="nav-link dropdown-toggle"
+                                href="#"
+                                id="settingsDropdown"
+                                role="button"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                            >
+                                Settings
+                            </a>
+                            <ul
+                                class="dropdown-menu"
+                                aria-labelledby="settingsDropdown"
+                            >
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        href="{% url 'forum:account_settings' %}"
+                                        >Account Settings</a
+                                    >
+                                </li>
+                                <li>
+                                    <a
+                                        class="dropdown-item"
+                                        href="{% url 'forum:password_change' %}"
+                                        >Change Password</a
+                                    >
+                                </li>
+                            </ul>
+                        </li>
+                        {% if user.role == 'admin' %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/">Admin</a>
+                        </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="/accounts/logout/"
+                                >Logout</a
+                            >
+                        </li>
+                        {% else %}
+                        <li class="nav-item">
+                            <span class="nav-link text-muted">(Guest)</span>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/accounts/login/"
+                                >Login</a
+                            >
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/accounts/signup/"
+                                >Sign up</a
+                            >
+                        </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </nav>
+
+        <main class="container mt-4">
+            <div class="card-soft">{% block content %}{% endblock %}</div>
+
+            <footer class="site-footer text-center">
+                <small class="d-block"
+                    >&copy; {% now "Y" %} Mini Forum — Simple white & teal
+                    theme</small
+                >
+            </footer>
+        </main>
+
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    </body>
+</html>
+</file>
+
+<file path="forum/tests/__init__.py">
+# tests package for forum app
+</file>
+
+<file path="forum/tests/test_models.py">
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from forum.models import Thread, Comment
+
+
+class ModelsTest(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username='modtest', password='testpass123')
+
+    def test_thread_and_comment_creation(self):
+        t = Thread.objects.create(title='Model Test', content='content', author=self.user)
+        self.assertEqual(Thread.objects.count(), 1)
+        c = Comment.objects.create(thread=t, author=self.user, content='nice')
+        self.assertEqual(Comment.objects.count(), 1)
+        self.assertEqual(str(t).find('Model Test') >= 0, True)
+        self.assertEqual(str(c).find('Comment by') >= 0, True)
+</file>
+
+<file path="forum/tests/test_views.py">
+from django.test import TestCase, Client
+from django.test.utils import template_rendered
+from django.test.client import store_rendered_templates
+
+# Prevent Django test client from copying template Context objects (avoids
+# AttributeError with certain Python/Django combinations when copying).
+try:
+    template_rendered.disconnect(store_rendered_templates)
+except Exception:
+    pass
+from django.urls import reverse
+from django.contrib.auth import get_user_model
+from forum.models import Thread
+
+
+class ViewsTest(TestCase):
+    def setUp(self):
+        User = get_user_model()
+        self.user = User.objects.create_user(username='viewtest', password='testpass123')
+        self.client = Client()
+        # Prevent template_rendered signal from attempting to copy Context objects
+        # which can fail under certain Python/Django combinations in the test harness.
+        try:
+            template_rendered.send = lambda *a, **k: None
+        except Exception:
+            pass
+
+    def test_index_view(self):
+        # index should be reachable
+        resp = self.client.get(reverse('forum:index'))
+        self.assertEqual(resp.status_code, 200)
+
+    def test_create_thread_requires_login(self):
+        resp = self.client.get(reverse('forum:create_thread'))
+        # should redirect to login
+        self.assertEqual(resp.status_code, 302)
+
+    def test_create_thread_post(self):
+        self.client.login(username='viewtest', password='testpass123')
+        resp = self.client.post(reverse('forum:create_thread'), {'title': 'View Test', 'content': 'x'})
+        # after creation should redirect to index
+        self.assertEqual(resp.status_code, 302)
+        t = Thread.objects.filter(title='View Test').first()
+        self.assertIsNotNone(t)
+</file>
+
+<file path="forum/__init__.py">
+# forum app
+</file>
+
+<file path="forum/admin.py">
+from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
+from .models import User, Thread, Comment, Report, ActivityLog
+
+
+@admin.register(User)
+class CustomUserAdmin(UserAdmin):
+    fieldsets = UserAdmin.fieldsets + (
+        ('Role', {'fields': ('role',)}),
+    )
+
+
+@admin.register(Thread)
+class ThreadAdmin(admin.ModelAdmin):
+    list_display = ('id', 'title', 'author', 'status', 'created_at')
+    list_filter = ('status', 'created_at')
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = ('id', 'thread', 'author', 'status', 'created_at')
+    list_filter = ('status',)
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ('id', 'reporter', 'report_type', 'object_id', 'resolved', 'created_at')
+    list_filter = ('resolved', 'report_type')
+
+
+@admin.register(ActivityLog)
+class ActivityLogAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'user', 'action', 'target_type', 'target_id')
+    list_filter = ('action', 'created_at')
+    ordering = ('-created_at',)
+    readonly_fields = ('created_at', 'user', 'action', 'target_type', 'target_id', 'target_user', 'details')
+</file>
+
+<file path="forum/apps.py">
+from django.apps import AppConfig
+
+
+class ForumConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'forum'
+</file>
+
+<file path="forum/models.py">
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
+from django.db import models
+from django.utils import timezone
+
+
+class User(AbstractUser):
+    ROLE_GUEST = "guest"
+    ROLE_MEMBER = "member"
+    ROLE_MODERATOR = "moderator"
+    ROLE_ADMIN = "admin"
+
+    ROLE_CHOICES = [
+        (ROLE_GUEST, "Guest"),
+        (ROLE_MEMBER, "Member"),
+        (ROLE_MODERATOR, "Moderator"),
+        (ROLE_ADMIN, "Admin"),
+    ]
+
+    role = models.CharField(max_length=16, choices=ROLE_CHOICES, default=ROLE_MEMBER)
+    avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
+    bio = models.TextField(max_length=500, blank=True, default="")
+
+    class Meta:
+        db_table = "auth_user"
+        verbose_name = "User"
+        verbose_name_plural = "Users"
+
+    def is_moderator(self):
+        return self.role == self.ROLE_MODERATOR or self.is_staff or self.is_superuser
+
+    def is_admin(self):
+        return self.role == self.ROLE_ADMIN or self.is_superuser
+
+    def get_thread_count(self):
+        """
+        Trả về số lượng Thread đã xuất bản của user.
+        Không tính những thread bị xóa hoặc ẩn.
+        """
+        return self.threads.filter(status=Thread.STATUS_PUBLISHED).count()
+
+    def get_comment_count(self):
+        """
+        Trả về số lượng Comment đã xuất bản của user.
+        Không tính những comment bị xóa hoặc ẩn.
+        """
+        return self.comments.filter(status=Comment.STATUS_PUBLISHED).count()
+
+    def get_display_name(self):
+        """
+        Trả về tên hiển thị: nếu có first_name và last_name thì ghép lại,
+        nếu không thì dùng username.
+        """
+        if self.first_name and self.last_name:
+            return f"{self.first_name} {self.last_name}"
+        elif self.first_name:
+            return self.first_name
+        return self.username
+
+    def __str__(self):
+        return self.get_display_name()
+
+
+class Thread(models.Model):
+    STATUS_PUBLISHED = "published"
+    STATUS_HIDDEN = "hidden"
+    STATUS_DELETED = "deleted"
+
+    STATUS_CHOICES = [
+        (STATUS_PUBLISHED, "Published"),
+        (STATUS_HIDDEN, "Hidden"),
+        (STATUS_DELETED, "Deleted"),
+    ]
+
+    title = models.CharField(max_length=255)
+    content = models.TextField()
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="threads"
+    )
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_PUBLISHED
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    image = models.ImageField(upload_to="threads/", null=True, blank=True)
+
+    def soft_delete(self):
+        self.status = self.STATUS_DELETED
+        self.save()
+
+    def __str__(self):
+        return f"{self.title} ({self.author})"
+
+
+class Comment(models.Model):
+    STATUS_PUBLISHED = "published"
+    STATUS_HIDDEN = "hidden"
+    STATUS_DELETED = "deleted"
+
+    STATUS_CHOICES = [
+        (STATUS_PUBLISHED, "Published"),
+        (STATUS_HIDDEN, "Hidden"),
+        (STATUS_DELETED, "Deleted"),
+    ]
+
+    thread = models.ForeignKey(
+        Thread, on_delete=models.CASCADE, related_name="comments"
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="comments"
+    )
+    content = models.TextField()
+    image = models.ImageField(upload_to="comments/", null=True, blank=True)
+    status = models.CharField(
+        max_length=16, choices=STATUS_CHOICES, default=STATUS_PUBLISHED
+    )
+    created_at = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+    parent = models.ForeignKey(
+        "self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE
+    )
+
+    def soft_delete(self):
+        self.status = self.STATUS_DELETED
+        self.save()
+
+    def __str__(self):
+        return f"Comment by {self.author} on {self.thread_id}"
+
+
+class Report(models.Model):
+    TYPE_THREAD = "thread"
+    TYPE_COMMENT = "comment"
+
+    REPORT_TYPE_CHOICES = [
+        (TYPE_THREAD, "Thread"),
+        (TYPE_COMMENT, "Comment"),
+    ]
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="reports"
+    )
+    report_type = models.CharField(max_length=16, choices=REPORT_TYPE_CHOICES)
+    object_id = models.PositiveIntegerField()
+    reason = models.TextField(blank=True)
+    created_at = models.DateTimeField(default=timezone.now)
+    resolved = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"Report {self.id} by {self.reporter}"
+
+
+class ActivityLog(models.Model):
+    ACTION_THREAD_CREATE = "thread_create"
+    ACTION_THREAD_DELETE = "thread_delete"
+    ACTION_THREAD_HIDE = "thread_hide"
+    ACTION_COMMENT_CREATE = "comment_create"
+    ACTION_COMMENT_DELETE = "comment_delete"
+    ACTION_COMMENT_HIDE = "comment_hide"
+    ACTION_USER_UPDATE = "user_update"
+    ACTION_ROLE_CHANGE = "role_change"
+    ACTION_REPORT_FILED = "report_filed"
+
+    ACTION_CHOICES = [
+        (ACTION_THREAD_CREATE, "Thread Created"),
+        (ACTION_THREAD_DELETE, "Thread Deleted"),
+        (ACTION_THREAD_HIDE, "Thread Hidden"),
+        (ACTION_COMMENT_CREATE, "Comment Created"),
+        (ACTION_COMMENT_DELETE, "Comment Deleted"),
+        (ACTION_COMMENT_HIDE, "Comment Hidden"),
+        (ACTION_USER_UPDATE, "User Info Updated"),
+        (ACTION_ROLE_CHANGE, "User Role Changed"),
+        (ACTION_REPORT_FILED, "Report Filed"),
+    ]
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="activity_logs",
+    )
+    action = models.CharField(max_length=32, choices=ACTION_CHOICES)
+    target_user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="target_activity_logs",
+    )
+    target_type = models.CharField(
+        max_length=32, blank=True
+    )  # 'thread', 'comment', 'user'
+    target_id = models.PositiveIntegerField(null=True, blank=True)
+    details = models.JSONField(
+        default=dict, blank=True
+    )  # store extra details like IP, old_value, new_value
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["-created_at"]),
+            models.Index(fields=["user", "-created_at"]),
+        ]
+
+    def __str__(self):
+        return (
+            f"{self.created_at.isoformat()} - {self.user} - {self.get_action_display()}"
+        )
+
+
+# simple signals to log created threads/comments
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+
+
+@receiver(post_save, sender=Thread)
+def log_thread_activity(sender, instance, created, **kwargs):
+    if created:
+        ActivityLog.objects.create(
+            user=instance.author,
+            action=ActivityLog.ACTION_THREAD_CREATE,
+            target_type="thread",
+            target_id=instance.id,
+        )
+
+
+@receiver(post_save, sender=Comment)
+def log_comment_activity(sender, instance, created, **kwargs):
+    if created:
+        ActivityLog.objects.create(
+            user=instance.author,
+            action=ActivityLog.ACTION_COMMENT_CREATE,
+            target_type="comment",
+            target_id=instance.id,
+        )
+</file>
+
+<file path="forum/permissions.py">
+from functools import wraps
+
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponseForbidden
+from django.shortcuts import redirect
+
+from .models import ActivityLog, User
+
+
+def log_activity(
+    user, action, target_type=None, target_id=None, target_user=None, details=None
+):
+    """Helper to log user activities"""
+    if details is None:
+        details = {}
+    ActivityLog.objects.create(
+        user=user,
+        action=action,
+        target_type=target_type,
+        target_id=target_id,
+        target_user=target_user,
+        details=details,
+    )
+
+
+# Permission check functions
+def is_guest(user):
+    """User is not authenticated"""
+    return not user.is_authenticated
+
+
+def is_member(user):
+    """User is authenticated with member role"""
+    return user.is_authenticated and user.role == User.ROLE_MEMBER
+
+
+def is_moderator(user):
+    """User is moderator or admin"""
+    return user.is_authenticated and user.role in [User.ROLE_MODERATOR, User.ROLE_ADMIN]
+
+
+def is_admin(user):
+    """User is admin"""
+    return user.is_authenticated and user.role == User.ROLE_ADMIN
+
+
+def can_view_thread(user, thread):
+    """Anyone can view published threads"""
+    if thread.status == "published":
+        return True
+    # Hidden/Deleted threads: only author, moderators, and admins
+    if thread.status in ["hidden", "deleted"]:
+        return user.is_authenticated and (thread.author == user or is_moderator(user))
+    return False
+
+
+def can_edit_thread(user, thread):
+    """Only author can edit, or admin"""
+    return user.is_authenticated and (thread.author == user or is_admin(user))
+
+
+def can_delete_thread(user, thread):
+    """Author, moderator, or admin can delete"""
+    return user.is_authenticated and (thread.author == user or is_moderator(user))
+
+
+def can_hide_thread(user, thread):
+    """Only moderator or admin can hide"""
+    return is_moderator(user)
+
+
+def can_create_comment(user):
+    """Only authenticated members can comment"""
+    return is_member(user) or is_moderator(user) or is_admin(user)
+
+
+def can_edit_comment(user, comment):
+    """Only author can edit"""
+    return user.is_authenticated and comment.author == user
+
+
+def can_delete_comment(user, comment):
+    """Author, moderator, or admin can delete"""
+    return user.is_authenticated and (comment.author == user or is_moderator(user))
+
+
+def can_hide_comment(user, comment):
+    """Only moderator or admin can hide"""
+    return is_moderator(user)
+
+
+def can_file_report(user):
+    """Only authenticated members can file reports"""
+    return user.is_authenticated
+
+
+def can_view_user_profile(user, target_user):
+    """Any authenticated user can view profiles"""
+    return user.is_authenticated
+
+
+def can_edit_user_profile(user, target_user):
+    """User can only edit own profile or admin can edit anyone's"""
+    if not user.is_authenticated:
+        return False
+    # User có thể edit profile của chính họ hoặc admin có thể edit profile bất kỳ ai
+    return user == target_user or is_admin(user)
+
+
+def can_view_user_ip(user, thread_or_comment):
+    """Only moderator and admin can view IP"""
+    return is_moderator(user)
+
+
+def can_manage_users(user):
+    """Only admin can manage users"""
+    return is_admin(user)
+
+
+def can_view_audit_log(user):
+    """Only admin can view audit logs"""
+    return is_admin(user)
+
+
+# Decorators for views
+def require_member(view_func):
+    """Require authenticated member or higher"""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_member(request.user):
+            return redirect("forum:index")
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def require_moderator(view_func):
+    """Require moderator or admin"""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_moderator(request.user):
+            return HttpResponseForbidden(
+                "You do not have permission to perform this action."
+            )
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+
+
+def require_admin(view_func):
+    """Require admin"""
+
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not is_admin(request.user):
+            return HttpResponseForbidden(
+                "You do not have permission to perform this action."
+            )
+        return view_func(request, *args, **kwargs)
+
+    return wrapper
+</file>
+
+<file path="forum/urls.py">
+from django.urls import path
+
+from . import views
+
+app_name = "forum"
+
+urlpatterns = [
+    path("", views.index, name="index"),
+    path("threads/create/", views.create_thread, name="create_thread"),
+    path("threads/<int:thread_id>/", views.thread_detail, name="detail"),
+    path("threads/<int:thread_id>/delete/", views.delete_thread, name="delete_thread"),
+    path(
+        "comments/<int:comment_id>/delete/", views.delete_comment, name="delete_comment"
+    ),
+    path("accounts/signup/", views.signup, name="signup"),
+    # User Profile URLs
+    path("user/<str:username>/", views.user_profile, name="user_profile"),
+    path("settings/account/", views.account_settings, name="account_settings"),
+    path("settings/password/", views.password_change_view, name="password_change"),
+]
+</file>
+
+<file path="forum/views.py">
+from django.contrib.auth import login as auth_login
+from django.contrib.auth.decorators import login_required
+from django.contrib.messages import error, success
+from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
+from django.db.models import Q
+from django.http import Http404, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.http import require_http_methods
+
+from .forms import (
+    AccountSettingsForm,
+    CommentForm,
+    CustomPasswordChangeForm,
+    CustomUserCreationForm,
+    ThreadForm,
+)
+from .models import ActivityLog, Comment, Thread, User
+from .permissions import (
+    can_create_comment,
+    can_delete_comment,
+    can_delete_thread,
+    can_view_thread,
+    is_member,
+    log_activity,
+)
+
+
+def index(request):
+    thread_list = Thread.objects.filter(status=Thread.STATUS_PUBLISHED).order_by(
+        "-created_at"
+    )
+    q = request.GET.get("q", "").strip()
+    author = request.GET.get("author", "").strip()
+
+    if q:
+        thread_list = thread_list.filter(
+            Q(title__icontains=q) | Q(content__icontains=q)
+        )
+    if author:
+        thread_list = thread_list.filter(author__username__iexact=author)
+
+    paginate = request.GET.get("paginate", "1")
+    if paginate != "0":
+        paginator = Paginator(thread_list, 20)
+        page = request.GET.get("page")
+        try:
+            threads = paginator.page(page)
+        except PageNotAnInteger:
+            threads = paginator.page(1)
+        except EmptyPage:
+            threads = paginator.page(paginator.num_pages)
+        is_paginated = True
+    else:
+        threads = thread_list
+        is_paginated = False
+
+    return render(
+        request,
+        "forum/index.html",
+        {
+            "threads": threads,
+            "query": q,
+            "author_q": author,
+            "is_paginated": is_paginated,
+        },
+    )
+
+
+@login_required
+def create_thread(request):
+    if not is_member(request.user):
+        return HttpResponseForbidden("Only members can create threads")
+
+    if request.method == "POST":
+        form = ThreadForm(request.POST, request.FILES)
+        if form.is_valid():
+            thread = form.save(commit=False)
+            thread.author = request.user
+            thread.save()
+            log_activity(
+                request.user, ActivityLog.ACTION_THREAD_CREATE, "thread", thread.id
+            )
+            return redirect("forum:index")
+    else:
+        form = ThreadForm()
+    return render(request, "forum/create_thread.html", {"form": form})
+
+
+def thread_detail(request, thread_id):
+    thread = get_object_or_404(Thread, pk=thread_id)
+    if thread.status == Thread.STATUS_DELETED:
+        return HttpResponseForbidden("Thread not available")
+    if not can_view_thread(request.user, thread):
+        return HttpResponseForbidden("You cannot view this thread")
+
+    comments = thread.comments.filter(
+        status=Comment.STATUS_PUBLISHED, parent__isnull=True
+    ).order_by("created_at")
+    reply_to = request.GET.get("reply_to")
+
+    try:
+        reply_to = int(reply_to) if reply_to else None
+    except (TypeError, ValueError):
+        reply_to = None
+
+    if request.method == "POST":
+        if not request.user.is_authenticated or not can_create_comment(request.user):
+            return redirect("login")
+
+        form = CommentForm(request.POST, request.FILES)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.thread = thread
+            comment.author = request.user
+
+            parent_id = request.POST.get("parent_id")
+            if parent_id:
+                parent = Comment.objects.filter(pk=parent_id).first()
+                if parent:
+                    comment.parent = parent
+
+            if not form.cleaned_data.get("content") and not form.cleaned_data.get(
+                "image"
+            ):
+                form.add_error(None, "Vui lòng nhập nội dung hoặc tải ảnh.")
+            else:
+                comment.save()
+                log_activity(
+                    request.user,
+                    ActivityLog.ACTION_COMMENT_CREATE,
+                    "comment",
+                    comment.id,
+                )
+                return redirect("forum:detail", thread_id=thread.id)
+    else:
+        form = CommentForm()
+
+    for c in comments:
+        c.replies_qs = c.replies.filter(status=Comment.STATUS_PUBLISHED).order_by(
+            "created_at"
+        )
+
+    return render(
+        request,
+        "forum/detail.html",
+        {"thread": thread, "comments": comments, "form": form, "reply_to": reply_to},
+    )
+
+
+@login_required
+def delete_thread(request, thread_id):
+    thread = get_object_or_404(Thread, pk=thread_id)
+    if not can_delete_thread(request.user, thread):
+        return HttpResponseForbidden("Not allowed")
+
+    if request.method == "POST":
+        thread.status = Thread.STATUS_DELETED
+        thread.save()
+        log_activity(
+            request.user,
+            ActivityLog.ACTION_THREAD_DELETE,
+            "thread",
+            thread.id,
+            target_user=thread.author,
+        )
+        return redirect("forum:index")
+    return HttpResponseForbidden("Only POST allowed")
+
+
+@login_required
+def delete_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    if not can_delete_comment(request.user, comment):
+        return HttpResponseForbidden("Not allowed")
+
+    if request.method == "POST":
+        thread_id = comment.thread.id
+        comment.status = Comment.STATUS_DELETED
+        comment.save()
+        log_activity(
+            request.user,
+            ActivityLog.ACTION_COMMENT_DELETE,
+            "comment",
+            comment.id,
+            target_user=comment.author,
+        )
+        return redirect("forum:detail", thread_id=thread_id)
+    return HttpResponseForbidden("Only POST allowed")
+
+
+def signup(request):
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            auth_login(request, user)
+            success(request, f"Chào mừng {user.get_display_name()}!")
+            return redirect("forum:index")
+    else:
+        form = CustomUserCreationForm()
+    return render(request, "registration/signup.html", {"form": form})
+
+
+def user_profile(request, username):
+    target_user = get_object_or_404(User, username=username)
+    user_threads = target_user.threads.filter(status=Thread.STATUS_PUBLISHED).order_by(
+        "-created_at"
+    )[:10]
+
+    context = {
+        "target_user": target_user,
+        "user_threads": user_threads,
+        "thread_count": target_user.get_thread_count(),
+        "comment_count": target_user.get_comment_count(),
+        "is_own_profile": request.user.is_authenticated and request.user == target_user,
+    }
+    return render(request, "forum/user_profile.html", context)
+
+
+@login_required
+def account_settings(request):
+    if request.method == "POST":
+        form = AccountSettingsForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            log_activity(
+                request.user, ActivityLog.ACTION_USER_UPDATE, "user", request.user.id
+            )
+            success(request, "Cập nhật thành công!")
+            return redirect("forum:account_settings")
+    else:
+        form = AccountSettingsForm(instance=request.user)
+
+    return render(request, "forum/account_settings.html", {"form": form})
+
+
+@login_required
+def password_change_view(request):
+    if request.method == "POST":
+        form = CustomPasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            form.save()
+            log_activity(
+                request.user,
+                ActivityLog.ACTION_USER_UPDATE,
+                "user",
+                request.user.id,
+                details={"action": "password_changed"},
+            )
+            success(request, "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.")
+            return redirect("login")
+    else:
+        form = CustomPasswordChangeForm(request.user)
+
+    return render(request, "forum/password_change.html", {"form": form})
+</file>
+
+<file path="mini_forum/__init__.py">
+# mini_forum package
+</file>
+
+<file path="mini_forum/settings.py">
+import os
+from pathlib import Path
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'replace-this-with-a-secure-key-for-production')
+
+# Read DEBUG from environment (set DJANGO_DEBUG=0 to disable)
+DEBUG = os.environ.get('DJANGO_DEBUG', '1') != '0'
+
+# Allow hosts from environment variable comma-separated, sensible default for local dev
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
+
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
+    'django.contrib.messages',
+    'django.contrib.staticfiles',
+    'forum',
+]
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+ROOT_URLCONF = 'mini_forum.urls'
+
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        'DIRS': [BASE_DIR / 'templates'],
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.debug',
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+            ],
+        },
+    },
+]
+
+WSGI_APPLICATION = 'mini_forum.wsgi.application'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+
+AUTH_PASSWORD_VALIDATORS = [
+    {
+        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+    },
+    {
+        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+    },
+]
+
+LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = 'UTC'
+
+USE_I18N = True
+
+USE_TZ = True
+
+STATIC_URL = '/static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+# Optionally: add app static folders if you keep extra static assets
+# STATICFILES_DIRS = [BASE_DIR / 'forum' / 'static']
+
+# Use WhiteNoise static files storage in production for efficient serving
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+AUTH_USER_MODEL = 'forum.User'
+
+# Redirect after login/logout
+LOGIN_REDIRECT_URL = '/' 
+LOGOUT_REDIRECT_URL = '/'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
+</file>
+
+<file path="mini_forum/urls.py">
+from django.contrib import admin
+from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('accounts/', include('django.contrib.auth.urls')),
+    path('', include('forum.urls')),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+</file>
+
+<file path="mini_forum/wsgi.py">
+import os
+from django.core.wsgi import get_wsgi_application
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mini_forum.settings')
+
+application = get_wsgi_application()
+</file>
+
+<file path="tests/verify_thread_flow.py">
+import os
+import sys
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, BASE_DIR)
+os.environ.setdefault('DJANGO_SETTINGS_MODULE','mini_forum.settings')
+import django
+django.setup()
+from django.test import Client
+from django.contrib.auth import get_user_model
+from forum.models import Thread, Comment
+User = get_user_model()
+username='tester'
+password='testpass123'
+if not User.objects.filter(username=username).exists():
+    User.objects.create_user(username=username,password=password)
+client=Client()
+login_ok=client.login(username=username,password=password)
+print('login_ok=',login_ok)
+resp=client.post('/threads/create/', {'title':'Test Thread','content':'This is a test.'})
+print('create status_code=',resp.status_code)
+t=Thread.objects.filter(title='Test Thread').first()
+print('thread exists=',bool(t))
+if t:
+    resp2=client.post(f'/threads/{t.id}/', {'content':'Nice thread'})
+    print('comment post status_code=',resp2.status_code)
+    c=Comment.objects.filter(thread=t, content='Nice thread').first()
+    print('comment exists=',bool(c))
+</file>
+
+<file path="create_test_accounts.py">
+#!/usr/bin/env python
+import os
+import django
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mini_forum.settings')
+django.setup()
+
+from forum.models import User
+
+# Create moderator account
+moderator, created = User.objects.get_or_create(
+    username='moderator_test',
+    defaults={
+        'email': 'moderator@test.com',
+        'first_name': 'Moderator',
+        'last_name': 'Test',
+        'role': 'moderator'
+    }
+)
+if created:
+    moderator.set_password('password123')
+    moderator.save()
+    print(f'✓ Created moderator account: {moderator.username}')
+else:
+    print(f'✓ Moderator account already exists: {moderator.username}')
+
+# Create guest account
+guest, created = User.objects.get_or_create(
+    username='guest_test',
+    defaults={
+        'email': 'guest@test.com',
+        'first_name': 'Guest',
+        'last_name': 'Test',
+        'role': 'guest'
+    }
+)
+if created:
+    guest.set_password('password123')
+    guest.save()
+    print(f'✓ Created guest account: {guest.username}')
+else:
+    print(f'✓ Guest account already exists: {guest.username}')
+
+# Create admin account if needed
+admin_user, created = User.objects.get_or_create(
+    username='admin_test',
+    defaults={
+        'email': 'admin@test.com',
+        'first_name': 'Admin',
+        'last_name': 'Test',
+        'role': 'admin',
+        'is_staff': True,
+        'is_superuser': True
+    }
+)
+if created:
+    admin_user.set_password('admin123')
+    admin_user.save()
+    print(f'✓ Created admin account: {admin_user.username}')
+else:
+    print(f'✓ Admin account already exists: {admin_user.username}')
+
+print('\n' + '='*60)
+print('Test Accounts Summary:')
+print('='*60)
+print('Role      | Username         | Password     | Email')
+print('-'*60)
+print('Guest     | guest_test       | password123  | guest@test.com')
+print('Moderator | moderator_test   | password123  | moderator@test.com')
+print('Admin     | admin_test       | admin123     | admin@test.com')
+print('='*60)
+</file>
+
+<file path="manage.py">
+#!/usr/bin/env python
+import os
+import sys
+
+
+def main():
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mini_forum.settings')
+    try:
+        from django.core.management import execute_from_command_line
+    except ImportError as exc:
+        raise ImportError(
+            "Couldn't import Django. Are you sure it's installed and"
+            " available on your PYTHONPATH environment variable?"
+        ) from exc
+    execute_from_command_line(sys.argv)
+
+
+if __name__ == '__main__':
+    main()
+</file>
+
+<file path="Procfile">
+web: gunicorn mini_forum.wsgi:application --bind 0.0.0.0:$PORT
+</file>
+
+</files>
