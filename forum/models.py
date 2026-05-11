@@ -10,7 +10,7 @@ class User(AbstractUser):
     ROLE_MODERATOR = "moderator"
     ROLE_ADMIN = "admin"
 
-    ROLE_CHOICES = [
+    ROLE_CHOICES =[
         (ROLE_GUEST, "Guest"),
         (ROLE_MEMBER, "Member"),
         (ROLE_MODERATOR, "Moderator"),
@@ -20,6 +20,7 @@ class User(AbstractUser):
     role = models.CharField(max_length=16, choices=ROLE_CHOICES, default=ROLE_MEMBER)
     avatar = models.ImageField(upload_to="avatars/", null=True, blank=True)
     bio = models.TextField(max_length=500, blank=True, default="")
+    name = models.CharField(max_length=255, blank=True, verbose_name="Tên hiển thị")
 
     class Meta:
         db_table = "auth_user"
@@ -33,28 +34,14 @@ class User(AbstractUser):
         return self.role == self.ROLE_ADMIN or self.is_superuser
 
     def get_thread_count(self):
-        """
-        Trả về số lượng Thread đã xuất bản của user.
-        Không tính những thread bị xóa hoặc ẩn.
-        """
         return self.threads.filter(status=Thread.STATUS_PUBLISHED).count()
 
     def get_comment_count(self):
-        """
-        Trả về số lượng Comment đã xuất bản của user.
-        Không tính những comment bị xóa hoặc ẩn.
-        """
         return self.comments.filter(status=Comment.STATUS_PUBLISHED).count()
 
     def get_display_name(self):
-        """
-        Trả về tên hiển thị: nếu có first_name và last_name thì ghép lại,
-        nếu không thì dùng username.
-        """
-        if self.first_name and self.last_name:
-            return f"{self.first_name} {self.last_name}"
-        elif self.first_name:
-            return self.first_name
+        if self.name:
+            return self.name
         return self.username
 
     def __str__(self):
@@ -66,7 +53,7 @@ class Thread(models.Model):
     STATUS_HIDDEN = "hidden"
     STATUS_DELETED = "deleted"
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES =[
         (STATUS_PUBLISHED, "Published"),
         (STATUS_HIDDEN, "Hidden"),
         (STATUS_DELETED, "Deleted"),
@@ -83,6 +70,12 @@ class Thread(models.Model):
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
     image = models.ImageField(upload_to="threads/", null=True, blank=True)
+    is_removed_by_mod = models.BooleanField(default=False)
+
+    @property
+    def score(self):
+        # Tính tổng điểm Vote
+        return sum(vote.value for vote in self.votes.all())
 
     def soft_delete(self):
         self.status = self.STATUS_DELETED
@@ -97,7 +90,7 @@ class Comment(models.Model):
     STATUS_HIDDEN = "hidden"
     STATUS_DELETED = "deleted"
 
-    STATUS_CHOICES = [
+    STATUS_CHOICES =[
         (STATUS_PUBLISHED, "Published"),
         (STATUS_HIDDEN, "Hidden"),
         (STATUS_DELETED, "Deleted"),
@@ -119,6 +112,11 @@ class Comment(models.Model):
     parent = models.ForeignKey(
         "self", null=True, blank=True, related_name="replies", on_delete=models.CASCADE
     )
+    is_removed_by_mod = models.BooleanField(default=False)
+
+    @property
+    def score(self):
+        return sum(vote.value for vote in self.votes.all())
 
     def soft_delete(self):
         self.status = self.STATUS_DELETED
@@ -128,11 +126,27 @@ class Comment(models.Model):
         return f"Comment by {self.author} on {self.thread_id}"
 
 
+# --- BẢNG LƯU VOTE ---
+class ThreadVote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    thread = models.ForeignKey(Thread, on_delete=models.CASCADE, related_name='votes')
+    value = models.SmallIntegerField() # 1: Upvote, -1: Downvote
+    class Meta:
+        unique_together = ('user', 'thread')
+
+class CommentVote(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE, related_name='votes')
+    value = models.SmallIntegerField()
+    class Meta:
+        unique_together = ('user', 'comment')
+
+
 class Report(models.Model):
     TYPE_THREAD = "thread"
     TYPE_COMMENT = "comment"
 
-    REPORT_TYPE_CHOICES = [
+    REPORT_TYPE_CHOICES =[
         (TYPE_THREAD, "Thread"),
         (TYPE_COMMENT, "Comment"),
     ]
@@ -161,7 +175,7 @@ class ActivityLog(models.Model):
     ACTION_ROLE_CHANGE = "role_change"
     ACTION_REPORT_FILED = "report_filed"
 
-    ACTION_CHOICES = [
+    ACTION_CHOICES =[
         (ACTION_THREAD_CREATE, "Thread Created"),
         (ACTION_THREAD_DELETE, "Thread Deleted"),
         (ACTION_THREAD_HIDE, "Thread Hidden"),
@@ -190,30 +204,26 @@ class ActivityLog(models.Model):
     )
     target_type = models.CharField(
         max_length=32, blank=True
-    )  # 'thread', 'comment', 'user'
+    )
     target_id = models.PositiveIntegerField(null=True, blank=True)
     details = models.JSONField(
         default=dict, blank=True
-    )  # store extra details like IP, old_value, new_value
+    )
     created_at = models.DateTimeField(default=timezone.now)
 
     class Meta:
         ordering = ["-created_at"]
-        indexes = [
+        indexes =[
             models.Index(fields=["-created_at"]),
             models.Index(fields=["user", "-created_at"]),
         ]
 
     def __str__(self):
-        return (
-            f"{self.created_at.isoformat()} - {self.user} - {self.get_action_display()}"
-        )
+        return f"{self.created_at.isoformat()} - {self.user} - {self.get_action_display()}"
 
 
-# simple signals to log created threads/comments
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-
 
 @receiver(post_save, sender=Thread)
 def log_thread_activity(sender, instance, created, **kwargs):
@@ -224,7 +234,6 @@ def log_thread_activity(sender, instance, created, **kwargs):
             target_type="thread",
             target_id=instance.id,
         )
-
 
 @receiver(post_save, sender=Comment)
 def log_comment_activity(sender, instance, created, **kwargs):

@@ -49,7 +49,7 @@ class CommentForm(forms.ModelForm):
 class AccountSettingsForm(forms.ModelForm):
     """
     Form để cập nhật thông tin cá nhân của user
-    Cho phép sửa: first_name, last_name, email, bio, avatar
+    Cho phép sửa: name, email, bio, avatar
     """
 
     email = forms.EmailField(
@@ -60,13 +60,10 @@ class AccountSettingsForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ["first_name", "last_name", "email", "bio", "avatar"]
+        fields = ["name", "email", "bio", "avatar"]
         widgets = {
-            "first_name": forms.TextInput(
+            "name": forms.TextInput(
                 attrs={"class": "form-control", "placeholder": "Tên"}
-            ),
-            "last_name": forms.TextInput(
-                attrs={"class": "form-control", "placeholder": "Họ"}
             ),
             "bio": forms.Textarea(
                 attrs={
@@ -84,8 +81,7 @@ class AccountSettingsForm(forms.ModelForm):
             ),
         }
         help_texts = {
-            "first_name": "Tên của bạn",
-            "last_name": "Họ của bạn",
+            "name": "Tên của bạn",
             "bio": "Tiểu sử cá nhân (tối đa 500 ký tự)",
             "avatar": "Ảnh đại diện (PNG, JPEG, GIF, WebP)",
         }
@@ -154,7 +150,7 @@ class AvatarUploadForm(forms.ModelForm):
 
 class CustomUserCreationForm(UserCreationForm):
     """
-    Form đăng ký tài khoản mở rộng với email, first_name, last_name
+    Form đăng ký tài khoản mở rộng với email, name
     Tự động set role='member' khi signup
     Validate email không trùng
     """
@@ -172,7 +168,7 @@ class CustomUserCreationForm(UserCreationForm):
         help_text="Địa chỉ email của bạn (phải duy nhất)",
     )
 
-    first_name = forms.CharField(
+    name = forms.CharField(
         required=False,
         label="Tên",
         widget=forms.TextInput(
@@ -184,25 +180,25 @@ class CustomUserCreationForm(UserCreationForm):
         ),
     )
 
-    last_name = forms.CharField(
-        required=False,
-        label="Họ",
-        widget=forms.TextInput(
-            attrs={
-                "class": "form-control",
-                "placeholder": "Họ của bạn",
-                "autocomplete": "family-name",
-            }
-        ),
-    )
+    # last_name = forms.CharField(
+    #     required=False,
+    #     label="Họ",
+    #     widget=forms.TextInput(
+    #         attrs={
+    #             "class": "form-control",
+    #             "placeholder": "Họ của bạn",
+    #             "autocomplete": "family-name",
+    #         }
+    #     ),
+    # )
 
     class Meta:
         model = User
         fields = (
             "username",
             "email",
-            "first_name",
-            "last_name",
+            "name",
+            # "last_name",
             "password1",
             "password2",
         )
@@ -211,7 +207,7 @@ class CustomUserCreationForm(UserCreationForm):
         super().__init__(*args, **kwargs)
         # Apply Bootstrap CSS class to all fields
         for field_name, field in self.fields.items():
-            if field_name not in ["email", "first_name", "last_name"]:
+            if field_name not in ["email", "name"]:
                 field.widget.attrs.update({"class": "form-control"})
 
         # Add help text cho username

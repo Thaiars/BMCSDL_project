@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Mod Dashboard{% endblock %}
+{% block content %}
+<h2>Mod Dashboard</h2>
+<hr>
+
+<h4>Threads bị báo cáo</h4>
+<div class="list-group mb-4">
+  {% for item in thread_reports %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <strong>{{ item.target.title }}</strong> (Bởi: {{ item.target.author }})<br>
+        <small class="text-danger">Lý do: {{ item.report.reason }}</small>
+      </div>
+      <div>
+        <a href="{% url 'forum:detail' item.target.id %}" class="btn btn-sm btn-outline-primary" target="_blank">Xem</a>
+        <form method="post" action="{% url 'forum:resolve_report' item.report.id %}" class="d-inline">
+          {% csrf_token %}<button class="btn btn-sm btn-warning">Bỏ qua</button>
+        </form>
+        <form method="post" action="{% url 'forum:delete_thread' item.target.id %}" class="d-inline">
+          {% csrf_token %}<button class="btn btn-sm btn-danger">Xóa Thread</button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">Không có thread nào bị báo cáo.</div>
+  {% endfor %}
+</div>
+
+<h4>Bình luận bị báo cáo</h4>
+<div class="list-group">
+  {% for item in comment_reports %}
+    <div class="list-group-item d-flex justify-content-between align-items-center">
+      <div>
+        <em>"{{ item.target.content|truncatewords:20 }}"</em> (Bởi: {{ item.target.author }})<br>
+        <small class="text-danger">Lý do: {{ item.report.reason }}</small>
+      </div>
+      <div>
+        <a href="{% url 'forum:detail' item.target.thread.id %}#comment-{{item.target.id}}" class="btn btn-sm btn-outline-primary" target="_blank">Xem</a>
+        <form method="post" action="{% url 'forum:resolve_report' item.report.id %}" class="d-inline">
+          {% csrf_token %}<button class="btn btn-sm btn-warning">Bỏ qua</button>
+        </form>
+        <form method="post" action="{% url 'forum:delete_comment' item.target.id %}" class="d-inline">
+          {% csrf_token %}<button class="btn btn-sm btn-danger">Xóa Comment</button>
+        </form>
+      </div>
+    </div>
+  {% empty %}
+    <div class="list-group-item text-muted">Không có bình luận nào bị báo cáo.</div>
+  {% endfor %}
+</div>
+{% endblock %}

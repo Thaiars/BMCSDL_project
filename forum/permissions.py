@@ -31,7 +31,7 @@ def is_guest(user):
 
 def is_member(user):
     """User is authenticated with member role"""
-    return user.is_authenticated and user.role == User.ROLE_MEMBER
+    return user.is_authenticated and user.role in [User.ROLE_MEMBER, User.ROLE_MODERATOR, User.ROLE_ADMIN]
 
 
 def is_moderator(user):
