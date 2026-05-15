@@ -1,94 +1,128 @@
 <!doctype html>
 <html>
-    <head>
-        {% load static %}
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>{% block title %}Mini Forum{% endblock %}</title>
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-        />
-        <link href="{% static 'forum/theme.css' %}" rel="stylesheet" />
-    </head>
-    <body>
-        <nav class="navbar navbar-expand-lg">
-            <div class="container-fluid">
-                <a class="navbar-brand" href="/">Mini Forum</a>
-                <button
-                    class="navbar-toggler"
-                    type="button"
-                    data-bs-toggle="collapse"
-                    data-bs-target="#navMain"
-                >
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="navMain">
-                    <ul class="navbar-nav ms-auto align-items-center">
-                        {% if user.is_authenticated %}
-                            <li class="nav-item">
-                                <span class="nav-link">
-                                    {{ user.first_name|default:user.username }}
-                                    <small>({{ user.get_role_display }})</small>
-                                </span>
-                            </li>
+<head>
+    {% load static %}
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{% block title %}Mini Forum{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <!-- Thêm FontAwesome cho Menu 3 chấm và Icon Vote -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="{% static 'forum/theme.css' %}" rel="stylesheet" />
+    <style>
+        /* CSS cho hệ thống VOTE Reddit style */
+        .vote-box { width: 40px; text-align: center; }
+        .vote-btn { background: none; border: none; font-size: 1.2rem; color: #ccc; cursor: pointer; padding: 0; transition: 0.2s;}
+        .vote-btn.active.upvote { color: #ff4500; }
+        .vote-btn.active.downvote { color: #7193ff; }
+        .vote-btn:hover { color: #888; }
+        .vote-score { font-weight: bold; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">Mini Forum</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navMain">
+                <ul class="navbar-nav ms-auto align-items-center">
+                    {% if user.is_authenticated %}
+                        <li class="nav-item">
+                            <span class="nav-link d-flex align-items-center">
+                                {% if user.avatar %}
+                                    <img src="{{ user.avatar.url }}" alt="avatar" class="rounded-circle me-2" width="30" height="30" style="object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 30px; height: 30px; font-size: 14px;">
+                                        {{ user.username|make_list|first|upper }}
+                                    </div>
+                                {% endif %}
+                                {{ user.username }} <small class="ms-1">({{ user.get_role_display }})</small>
+                            </span>
+                        </li>
+                        <li class="nav-item"><a class="nav-link" href="/threads/create/">Create</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{% url 'forum:user_profile' user.username %}">Profile</a></li>
 
-                            {% if user.role == 'member' or user.role == 'moderator' or user.role == 'admin' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="/threads/create/">Create</a>
-                            </li>
-                            {% endif %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Settings
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
+                                <li><a class="dropdown-item" href="{% url 'forum:account_settings' %}">Account Settings</a></li>
+                                <li><a class="dropdown-item" href="{% url 'forum:password_change' %}">Change Password</a></li>
+                            </ul>
+                        </li>
 
-                            <!-- User Profile Links -->
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'forum:user_profile' user.username %}">Profile</a>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="settingsDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    Settings
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="settingsDropdown">
-                                    <li><a class="dropdown-item" href="{% url 'forum:account_settings' %}">Account Settings</a></li>
-                                    <li><a class="dropdown-item" href="{% url 'forum:password_change' %}">Change Password</a></li>
-                                </ul>
-                            </li>
-
-                            {% if user.role == 'admin' %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="/admin/">Admin</a>
-                            </li>
-                            {% endif %}
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="/accounts/logout/">Logout</a>
-                            </li>
-                        {% else %}
-                            <li class="nav-item">
-                                <span class="nav-link text-muted">(Guest)</span>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/accounts/login/">Login</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="/accounts/signup/">Sign up</a>
-                            </li>
+                        <!-- Nút Mod dành cho Moderator VÀ Admin -->
+                        {% if user.is_staff or user.role == 'moderator' or user.role == 'admin' %}
+                        <li class="nav-item"><a class="nav-link text-warning fw-bold" href="{% url 'forum:mod_dashboard' %}">Mod</a></li>
                         {% endif %}
-                    </ul>
+
+                        <!-- Nút Admin CHỈ dành cho Admin -->
+                        {% if user.is_superuser or user.role == 'admin' %}
+                        <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/admin/">Admin</a></li>
+                        {% endif %}
+
+                        <li class="nav-item"><a class="nav-link" href="/accounts/logout/">Logout</a></li>
+                    {% else %}
+                        <li class="nav-item"><a class="nav-link" href="/accounts/login/">Login</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/accounts/signup/">Sign up</a></li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mt-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
-            </div>
-        </nav>
+            {% endfor %}
+        {% endif %}
+        <div class="card-soft">{% block content %}{% endblock %}</div>
+    </main>
 
-        <main class="container mt-4">
-            <div class="card-soft">
-                {% block content %}{% endblock %}
-            </div>
+    <!-- Modal Dùng Chung Để Report -->
+    <div class="modal fade" id="reportModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post" action="{% url 'forum:create_report' %}" class="modal-content">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title">Báo cáo vi phạm</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="type" id="reportType">
+                    <input type="hidden" name="id" id="reportId">
+                    <textarea name="reason" class="form-control" rows="3" placeholder="Nhập lý do báo cáo..." required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-danger">Gửi báo cáo</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-            <footer class="site-footer text-center">
-                <small class="d-block">&copy; {% now "Y" %} Mini Forum — Simple white & teal theme</small>
-            </footer>
-        </main>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Set data for Report Modal
+        const reportModal = document.getElementById('reportModal')
+        if (reportModal) {
+            reportModal.addEventListener('show.bs.modal', event => {
+                const button = event.relatedTarget
+                document.getElementById('reportType').value = button.getAttribute('data-type')
+                document.getElementById('reportId').value = button.getAttribute('data-id')
+            })
+        }
 
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    </body>
+        // JS logic dùng chung (Vote)
+        // Lưu ý: Các logic xử lý nút bấm đổi màu Vote được dời về file detail.html ở block extra_js
+    </script>
+
+    <!-- Chỗ để gắn JS tải ảnh comment (Preview) từ các trang con -->
+    {% block extra_js %}{% endblock %}
+</body>
 </html>

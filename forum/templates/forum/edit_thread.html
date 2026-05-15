@@ -1,18 +1,24 @@
 {% extends 'base.html' %}
 
-{% block title %}Create Thread{% endblock %}
+{% block title %}Edit Thread{% endblock %}
 
 {% block content %}
   <div class="row justify-content-center">
     <div class="col-12 col-md-10">
-      <h1>Create Thread</h1>
+      <h1>Edit Thread</h1>
       <form method="post" enctype="multipart/form-data">{% csrf_token %}
         <div class="mb-3">{{ form.title.label_tag }} {{ form.title }}</div>
         <div class="mb-3">{{ form.content.label_tag }} {{ form.content }}</div>
-        <div class="mb-3">{{ form.image.label_tag }} {{ form.image }}</div>
+        <div class="mb-3">
+          {{ form.image.label_tag }}
+          {% if thread.image %}
+            <div class="mb-2">Current: <a href="{{ thread.image.url }}">{{ thread.image.name }}</a></div>
+          {% endif %}
+          {{ form.image }}
+        </div>
         <div class="d-flex gap-2">
-          <button class="btn btn-primary" type="submit">Create</button>
-          <a class="btn btn-secondary" href="{% url 'forum:index' %}">Cancel</a>
+          <button class="btn btn-primary" type="submit">Save Changes</button>
+          <a class="btn btn-secondary" href="{% url 'forum:detail' thread.id %}">Cancel</a>
         </div>
       </form>
     </div>
