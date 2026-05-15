@@ -231,6 +231,25 @@ def delete_comment(request, comment_id):
     return redirect("forum:detail", thread_id=thread_id)
 
 
+@require_http_methods(["POST"])
+@login_required
+def edit_comment(request, comment_id):
+    comment = get_object_or_404(Comment, pk=comment_id)
+    # Chỉ tác giả mới được sửa
+    if request.user != comment.author:
+        return JsonResponse({'error': 'Bạn không có quyền chỉnh sửa bình luận này.'}, status=403)
+    if comment.is_removed_by_mod or comment.status == Comment.STATUS_DELETED:
+        return JsonResponse({'error': 'Bình luận này không thể chỉnh sửa.'}, status=400)
+
+    new_content = request.POST.get('content', '').strip()
+    if not new_content:
+        return JsonResponse({'error': 'Nội dung không được để trống.'}, status=400)
+
+    comment.content = new_content
+    comment.save()
+    return JsonResponse({'success': True, 'content': comment.content})
+
+
 # --- API VOTE ---
 @require_http_methods(["POST"])
 @login_required

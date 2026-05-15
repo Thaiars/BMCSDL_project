@@ -11,6 +11,7 @@ urlpatterns =[
     path("threads/<int:thread_id>/delete/", views.delete_thread, name="delete_thread"),
     path("threads/<int:thread_id>/pin/", views.toggle_pin_thread, name="toggle_pin_thread"),
     path("comments/<int:comment_id>/delete/", views.delete_comment, name="delete_comment"),
+    path("comments/<int:comment_id>/edit/", views.edit_comment, name="edit_comment"),
 
     # Vote API
     path("api/vote/", views.vote_api, name="vote_api"),

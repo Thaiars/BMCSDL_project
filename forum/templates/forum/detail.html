@@ -125,6 +125,11 @@
                     <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                   </button>
                   <ul class="dropdown-menu dropdown-menu-end">
+                    {% if c.author == user %}
+                    <li>
+                      <button class="dropdown-item edit-comment-btn" data-id="{{ c.id }}">Chỉnh sửa</button>
+                    </li>
+                    {% endif %}
                     {% if c.author == user or user.role == 'moderator' or user.role == 'admin' %}
                     <li>
                       <form method="post" action="{% url 'forum:delete_comment' c.id %}">
@@ -145,11 +150,20 @@
               {% if c.is_removed_by_mod %}
                 <span class="text-danger fst-italic">[Bình luận này đã bị Quản trị viên xóa vì vi phạm nội quy]</span>
               {% else %}
-                {{ c.content }}
+                <span id="comment-text-{{ c.id }}">{{ c.content }}</span>
                 {% if c.image %}
                   <div class="mt-2"><img src="{{ c.image.url }}" alt="comment image" class="img-fluid rounded" style="max-width:360px"></div>
                 {% endif %}
               {% endif %}
+            </div>
+            <!-- Inline Edit Form cho comment cha -->
+            <div id="edit-area-{{ c.id }}" class="edit-area mt-2" style="display:none;">
+              <textarea class="form-control mb-1" rows="3" id="edit-textarea-{{ c.id }}">{{ c.content }}</textarea>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-primary save-edit-btn" data-id="{{ c.id }}" data-url="{% url 'forum:edit_comment' c.id %}">Lưu</button>
+                <button class="btn btn-sm btn-secondary cancel-edit-btn" data-id="{{ c.id }}">Hủy</button>
+              </div>
+              <div id="edit-error-{{ c.id }}" class="text-danger small mt-1" style="display:none;"></div>
             </div>
 
             <!-- Nút Reply và Khung Reply nguyên bản -->
@@ -221,6 +235,11 @@
                             <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
                           </button>
                           <ul class="dropdown-menu dropdown-menu-end">
+                            {% if reply.author == user %}
+                            <li>
+                              <button class="dropdown-item edit-comment-btn" data-id="{{ reply.id }}">Chỉnh sửa</button>
+                            </li>
+                            {% endif %}
                             {% if reply.author == user or user.role == 'moderator' or user.role == 'admin' %}
                             <li>
                               <form method="post" action="{% url 'forum:delete_comment' reply.id %}">
@@ -240,11 +259,20 @@
                       {% if reply.is_removed_by_mod %}
                         <span class="text-danger fst-italic">[Bình luận đã bị Mod xóa]</span>
                       {% else %}
-                        {{ reply.content }}
+                        <span id="comment-text-{{ reply.id }}">{{ reply.content }}</span>
                         {% if reply.image %}
                           <div class="mt-2"><img src="{{ reply.image.url }}" alt="reply image" class="img-fluid rounded" style="max-width:300px"></div>
                         {% endif %}
                       {% endif %}
+                    </div>
+                    <!-- Inline Edit Form cho reply -->
+                    <div id="edit-area-{{ reply.id }}" class="edit-area mt-2" style="display:none;">
+                      <textarea class="form-control mb-1" rows="2" id="edit-textarea-{{ reply.id }}">{{ reply.content }}</textarea>
+                      <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-primary save-edit-btn" data-id="{{ reply.id }}" data-url="{% url 'forum:edit_comment' reply.id %}">Lưu</button>
+                        <button class="btn btn-sm btn-secondary cancel-edit-btn" data-id="{{ reply.id }}">Hủy</button>
+                      </div>
+                      <div id="edit-error-{{ reply.id }}" class="text-danger small mt-1" style="display:none;"></div>
                     </div>
                     
                     <!-- Nút Reply cho bình luận con -->
@@ -448,45 +476,119 @@ window.attachMainPreviewHandler = function(input){
   }
 };
 
-document.addEventListener('click', function(e){
-  var el = e.target.closest && e.target.closest('.reply-toggle, .image-trigger, #main-image-trigger, .cancel-reply');
-  if(!el) return;
-  if(el.classList && el.classList.contains('reply-toggle')){
-    e.preventDefault();
-    var id = el.dataset.id;
-    var area = document.getElementById('reply-area-' + id);
-    if(!area) return;
-    var isOpen = area.style.display === 'block';
-    document.querySelectorAll('.reply-area').forEach(function(a){ if(a.id !== 'reply-area-' + id) a.style.display = 'none'; });
-    if(!isOpen){ area.style.display = 'block'; var ta = area.querySelector('textarea'); if(ta) ta.focus(); }
-    else { area.style.display = 'none'; }
-    return;
-  }
-  if(el.classList && el.classList.contains('cancel-reply')){
-    var id = el.dataset.id; var area = document.getElementById('reply-area-' + id);
-    if(!area) return;
-    area.style.display = 'none';
-    var ta = area.querySelector('textarea'); if(ta) ta.value = '';
-    var input = area.querySelector('input[type=file]'); if(input){ input.value = ''; input.dispatchEvent(new Event('change')); }
-    var preview = area.querySelector('.reply-image-preview'); if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
-    var removeBtn = area.querySelector('.remove-reply-image'); if(removeBtn){ removeBtn.classList.add('d-none'); }
-    return;
-  }
-  if(el.id === 'main-image-trigger' || (el.classList && el.classList.contains('image-trigger'))){
-    e.preventDefault();
-    if(el.id === 'main-image-trigger'){
-      var mainInput = document.querySelector('#comment-form input[type=file]') || document.getElementById('id_image');
-      attachMainPreviewHandler(mainInput);
-      if(mainInput){ setTimeout(function(){ try{ mainInput.click(); }catch(err){ console.error(err); } }, 50); }
-      return;
-    }
-    var id = el.dataset.id;
-    var input = document.getElementById('reply-image-' + id) || (document.getElementById('reply-area-' + id) && document.getElementById('reply-area-' + id).querySelector('input[type=file]'));
-    var area = document.getElementById('reply-area-' + id);
-    if(area){ area.style.display = 'block'; }
-    if(input){ attachReplyPreviewHandler(input); setTimeout(function(){ try{ input.click(); }catch(err){ console.error(err); } }, 50); }
-    return;
-  }
+// --- Reply toggle ---
+document.querySelectorAll('.reply-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var id = this.getAttribute('data-id');
+        var area = document.getElementById('reply-area-' + id);
+        if(!area) return;
+        var isOpen = area.style.display === 'block';
+        document.querySelectorAll('.reply-area').forEach(function(a){ if(a.id !== 'reply-area-' + id) a.style.display = 'none'; });
+        if(!isOpen){
+            area.style.display = 'block';
+            var ta = area.querySelector('textarea');
+            if(ta) { ta.focus(); var v=ta.value; ta.value=''; ta.value=v; }
+        } else {
+            area.style.display = 'none';
+        }
+    });
+});
+
+document.querySelectorAll('.cancel-reply').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        var id = this.getAttribute('data-id');
+        var area = document.getElementById('reply-area-' + id);
+        if(!area) return;
+        area.style.display = 'none';
+        var ta = area.querySelector('textarea'); if(ta) ta.value = '';
+        var input = area.querySelector('input[type=file]'); if(input){ input.value = ''; input.dispatchEvent(new Event('change')); }
+        var preview = area.querySelector('.reply-image-preview'); if(preview){ preview.src = ''; preview.style.display = 'none'; preview.classList.add('d-none'); }
+        var removeBtn = area.querySelector('.remove-reply-image'); if(removeBtn){ removeBtn.classList.add('d-none'); }
+    });
+});
+
+document.querySelectorAll('.image-trigger').forEach(function(btn) {
+    btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        if(this.id === 'main-image-trigger'){
+            var mainInput = document.querySelector('#comment-form input[type=file]') || document.getElementById('id_image');
+            attachMainPreviewHandler(mainInput);
+            if(mainInput) setTimeout(function(){ try{ mainInput.click(); }catch(err){ console.error(err); } }, 50);
+            return;
+        }
+        var id = this.getAttribute('data-id');
+        var input = document.getElementById('reply-image-' + id) || (document.getElementById('reply-area-' + id) && document.getElementById('reply-area-' + id).querySelector('input[type=file]'));
+        var area = document.getElementById('reply-area-' + id);
+        if(area){ area.style.display = 'block'; }
+        if(input){ attachReplyPreviewHandler(input); setTimeout(function(){ try{ input.click(); }catch(err){ console.error(err); } }, 50); }
+    });
+});
+
+// --- Inline Edit comment / reply ---
+document.querySelectorAll('.edit-comment-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-id');
+        // Ẩn tất cả edit area khác trước
+        document.querySelectorAll('.edit-area').forEach(function(a) { a.style.display = 'none'; });
+        var area = document.getElementById('edit-area-' + id);
+        var textSpan = document.getElementById('comment-text-' + id);
+        var ta = document.getElementById('edit-textarea-' + id);
+        if (!area) return;
+        // Sync nội dung hiện tại vào textarea
+        if (ta && textSpan) ta.value = textSpan.textContent.trim();
+        area.style.display = 'block';
+        if (ta) ta.focus();
+    });
+});
+
+document.querySelectorAll('.cancel-edit-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-id');
+        var area = document.getElementById('edit-area-' + id);
+        var errDiv = document.getElementById('edit-error-' + id);
+        if (area) area.style.display = 'none';
+        if (errDiv) errDiv.style.display = 'none';
+    });
+});
+
+document.querySelectorAll('.save-edit-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        var id = this.getAttribute('data-id');
+        var url = this.getAttribute('data-url');
+        var ta = document.getElementById('edit-textarea-' + id);
+        var textSpan = document.getElementById('comment-text-' + id);
+        var errDiv = document.getElementById('edit-error-' + id);
+        var area = document.getElementById('edit-area-' + id);
+        if (!ta) return;
+        var newContent = ta.value.trim();
+        if (!newContent) {
+            if (errDiv) { errDiv.textContent = 'Nội dung không được để trống.'; errDiv.style.display = 'block'; }
+            return;
+        }
+        var csrfToken = '{{ csrf_token }}';
+        var formData = new FormData();
+        formData.append('content', newContent);
+        formData.append('csrfmiddlewaretoken', csrfToken);
+        btn.disabled = true;
+        fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRFToken': csrfToken } })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            btn.disabled = false;
+            if (data.success) {
+                if (textSpan) textSpan.textContent = data.content;
+                if (area) area.style.display = 'none';
+                if (errDiv) errDiv.style.display = 'none';
+            } else {
+                if (errDiv) { errDiv.textContent = data.error || 'Có lỗi xảy ra.'; errDiv.style.display = 'block'; }
+            }
+        })
+        .catch(function() {
+            btn.disabled = false;
+            if (errDiv) { errDiv.textContent = 'Lỗi kết nối. Vui lòng thử lại.'; errDiv.style.display = 'block'; }
+        });
+    });
 });
 </script>
 {% endblock %}
