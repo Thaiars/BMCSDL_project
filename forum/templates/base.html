@@ -62,6 +62,7 @@
                         <!-- Nút Admin CHỈ dành cho Admin -->
                         {% if user.is_superuser or user.role == 'admin' %}
                         <li class="nav-item"><a class="nav-link text-danger fw-bold" href="/admin/">Admin</a></li>
+                        <li class="nav-item"><a class="nav-link text-danger fw-bold" href="{% url 'forum:activity_log' %}">Activity Log</a></li>
                         {% endif %}
 
                         <li class="nav-item"><a class="nav-link" href="/accounts/logout/">Logout</a></li>

@@ -402,3 +402,62 @@ def password_change_view(request):
         form = CustomPasswordChangeForm(request.user)
 
     return render(request, "forum/password_change.html", {"form": form})
+
+
+# --- ACTIVITY LOG (Admin only) ---
+@login_required
+def activity_log(request):
+    if not request.user.is_admin():
+        return HttpResponseForbidden("Chỉ Admin mới được xem Activity Log.")
+
+    logs = ActivityLog.objects.select_related("user", "target_user").all()
+
+    # Filter by action
+    action_filter = request.GET.get("action", "")
+    if action_filter:
+        logs = logs.filter(action=action_filter)
+
+    # Filter by user
+    user_filter = request.GET.get("user", "").strip()
+    if user_filter:
+        logs = logs.filter(user__username__icontains=user_filter)
+
+    paginator = Paginator(logs, 30)
+    page = request.GET.get("page")
+    try:
+        logs_page = paginator.page(page)
+    except PageNotAnInteger:
+        logs_page = paginator.page(1)
+    except EmptyPage:
+        logs_page = paginator.page(paginator.num_pages)
+
+    action_choices = ActivityLog.ACTION_CHOICES
+
+    return render(request, "forum/activity_log.html", {
+        "logs": logs_page,
+        "action_choices": action_choices,
+        "action_filter": action_filter,
+        "user_filter": user_filter,
+    })
+
+
+@login_required
+def activity_log_detail(request, log_id):
+    if not request.user.is_admin():
+        return HttpResponseForbidden("Chỉ Admin mới được xem Activity Log.")
+
+    log = get_object_or_404(ActivityLog, pk=log_id)
+
+    # Resolve the related target object for context
+    target_object = None
+    if log.target_type == "thread" and log.target_id:
+        target_object = Thread.objects.filter(pk=log.target_id).first()
+    elif log.target_type == "comment" and log.target_id:
+        target_object = Comment.objects.filter(pk=log.target_id).first()
+    elif log.target_type == "user" and log.target_id:
+        target_object = User.objects.filter(pk=log.target_id).first()
+
+    return render(request, "forum/activity_log_detail.html", {
+        "log": log,
+        "target_object": target_object,
+    })

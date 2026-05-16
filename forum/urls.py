@@ -23,6 +23,10 @@ urlpatterns =[
     path("mod/", views.mod_dashboard, name="mod_dashboard"),
     path("mod/report/<int:report_id>/resolve/", views.resolve_report, name="resolve_report"),
 
+    # Admin Activity Log
+    path("activity-log/", views.activity_log, name="activity_log"),
+    path("activity-log/<int:log_id>/", views.activity_log_detail, name="activity_log_detail"),
+
     path("accounts/signup/", views.signup, name="signup"),
     path("user/<str:username>/", views.user_profile, name="user_profile"),
     path("settings/account/", views.account_settings, name="account_settings"),

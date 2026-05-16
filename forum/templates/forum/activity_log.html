@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+
+{% block title %}Activity Log{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Activity Log (Admin Only)</h1>
+    </div>
+
+    <!-- Filters -->
+    <form method="get" class="row g-3 mb-4 p-3 bg-light rounded border">
+        <div class="col-md-4">
+            <label for="action" class="form-label">Loại hành động</label>
+            <select name="action" id="action" class="form-select">
+                <option value="">Tất cả</option>
+                {% for value, label in action_choices %}
+                    <option value="{{ value }}" {% if action_filter == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label for="user" class="form-label">Người dùng (Username)</label>
+            <input type="text" name="user" id="user" class="form-control" value="{{ user_filter }}" placeholder="Nhập username...">
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+            <button type="submit" class="btn btn-primary me-2">Lọc</button>
+            <a href="{% url 'forum:activity_log' %}" class="btn btn-secondary">Xóa bộ lọc</a>
+        </div>
+    </form>
+
+    <!-- Logs Table -->
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered align-middle">
+            <thead class="table-dark">
+                <tr>
+                    <th scope="col" style="width: 20%">Thời gian</th>
+                    <th scope="col" style="width: 20%">Người thực hiện</th>
+                    <th scope="col" style="width: 20%">Hành động</th>
+                    <th scope="col" style="width: 30%">Mục tiêu</th>
+                    <th scope="col" style="width: 10%">Chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr style="cursor: pointer;" onclick="window.location='{% url 'forum:activity_log_detail' log.id %}'">
+                    <td>{{ log.created_at|date:"d/m/Y H:i:s" }}</td>
+                    <td>
+                        {% if log.user %}
+                            <a href="{% url 'forum:user_profile' log.user.username %}" class="text-decoration-none fw-bold" onclick="event.stopPropagation();">
+                                {{ log.user.username }}
+                            </a>
+                        {% else %}
+                            <span class="text-muted">Hệ thống</span>
+                        {% endif %}
+                    </td>
+                    <td><span class="badge bg-secondary">{{ log.get_action_display }}</span></td>
+                    <td>
+                        {% if log.target_user %}
+                            User: <a href="{% url 'forum:user_profile' log.target_user.username %}" onclick="event.stopPropagation();">{{ log.target_user.username }}</a>
+                        {% elif log.target_type == "thread" and log.target_id %}
+                            Thread ID: {{ log.target_id }}
+                        {% elif log.target_type == "comment" and log.target_id %}
+                            Comment ID: {{ log.target_id }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'forum:activity_log_detail' log.id %}" class="btn btn-sm btn-info text-white" onclick="event.stopPropagation();">
+                            Xem
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center py-4 text-muted">Không có log nào.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if logs.has_other_pages %}
+    <nav aria-label="Page navigation" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if logs.has_previous %}
+                <li class="page-item"><a class="page-link" href="?page={{ logs.previous_page_number }}&action={{ action_filter }}&user={{ user_filter }}">Trước</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Trước</span></li>
+            {% endif %}
+
+            {% for i in logs.paginator.page_range %}
+                {% if logs.number == i %}
+                    <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+                {% else %}
+                    <li class="page-item"><a class="page-link" href="?page={{ i }}&action={{ action_filter }}&user={{ user_filter }}">{{ i }}</a></li>
+                {% endif %}
+            {% endfor %}
+
+            {% if logs.has_next %}
+                <li class="page-item"><a class="page-link" href="?page={{ logs.next_page_number }}&action={{ action_filter }}&user={{ user_filter }}">Sau</a></li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">Sau</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+</div>
+{% endblock %}

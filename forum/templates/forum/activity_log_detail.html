@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Chi tiết Activity Log{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Chi tiết Activity Log</h1>
+        <a href="{% url 'forum:activity_log' %}" class="btn btn-secondary">Quay lại danh sách</a>
+    </div>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Thông tin Log #{{ log.id }}</h5>
+        </div>
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-sm-3 fw-bold text-muted">Thời gian:</div>
+                <div class="col-sm-9">{{ log.created_at|date:"d/m/Y H:i:s" }}</div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-3 fw-bold text-muted">Người thực hiện:</div>
+                <div class="col-sm-9">
+                    {% if log.user %}
+                        <a href="{% url 'forum:user_profile' log.user.username %}" class="text-decoration-none fw-bold">
+                            {{ log.user.username }}
+                        </a> (Role: {{ log.user.get_role_display }})
+                    {% else %}
+                        <span class="text-muted">Hệ thống (Không có User)</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-sm-3 fw-bold text-muted">Hành động:</div>
+                <div class="col-sm-9">
+                    <span class="badge bg-primary fs-6">{{ log.get_action_display }}</span> (Mã: <code>{{ log.action }}</code>)
+                </div>
+            </div>
+            
+            <hr>
+
+            <h5 class="mb-3 mt-4 text-primary">Thông tin Mục tiêu (Target)</h5>
+            <div class="row mb-3">
+                <div class="col-sm-3 fw-bold text-muted">Loại mục tiêu:</div>
+                <div class="col-sm-9">
+                    {% if log.target_type %}
+                        {{ log.target_type|title }}
+                    {% else %}
+                        <span class="text-muted">Không xác định</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="row mb-3">
+                <div class="col-sm-3 fw-bold text-muted">Đối tượng bị ảnh hưởng:</div>
+                <div class="col-sm-9">
+                    {% if log.target_user %}
+                        User: <a href="{% url 'forum:user_profile' log.target_user.username %}">{{ log.target_user.username }}</a>
+                    {% elif target_object %}
+                        {% if log.target_type == "thread" %}
+                            Thread: <a href="{% url 'forum:detail' target_object.id %}">{{ target_object.title }}</a>
+                        {% elif log.target_type == "comment" %}
+                            Comment: <a href="{% url 'forum:detail' target_object.thread.id %}#comment-{{ target_object.id }}">Xem Comment trong Thread</a>
+                        {% elif log.target_type == "user" %}
+                            User: <a href="{% url 'forum:user_profile' target_object.username %}">{{ target_object.username }}</a>
+                        {% endif %}
+                    {% elif log.target_id %}
+                        ID Mục tiêu: {{ log.target_id }} <span class="text-danger small">(Đối tượng này có thể đã bị xóa khỏi CSDL)</span>
+                    {% else %}
+                        <span class="text-muted">Không có đối tượng</span>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if log.details %}
+            <hr>
+            <h5 class="mb-3 mt-4 text-info">Chi tiết khác (JSON payload)</h5>
+            <div class="bg-light p-3 rounded border">
+                <pre class="mb-0" style="white-space: pre-wrap; font-size: 0.9rem;">{{ log.details|pprint }}</pre>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
