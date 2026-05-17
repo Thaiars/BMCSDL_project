@@ -1,6 +1,7 @@
 asgiref==3.11.1
 bleach==6.3.0
 Django==4.2.30
+django-jazzmin==3.0.4
 gunicorn==25.3.0
 mssql-django==1.7.1
 packaging==26.2
