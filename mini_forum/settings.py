@@ -1,5 +1,8 @@
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -12,6 +15,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '1') != '0'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
 
 INSTALLED_APPS = [
+    'jazzmin',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -56,10 +60,16 @@ DATABASES = {
     'default': {
         'ENGINE': 'mssql',
         'NAME': 'mini_forum_db',
-        'HOST': '.',
+        # Đọc từ file .env, nếu không có thì mặc định dùng '.' của Thái
+        'HOST': os.getenv('DB_HOST', '.'),
+        'USER': os.getenv('DB_USER', ''),
+        'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'OPTIONS': {
             'driver': 'ODBC Driver 18 for SQL Server',
-            'extra_params': 'Integrated Security=Yes;TrustServerCertificate=yes;',
+            'extra_params': os.getenv(
+                'DB_EXTRA_PARAMS',
+                'Integrated Security=Yes;TrustServerCertificate=yes;'
+            ),
         },
     }
 }
@@ -96,7 +106,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'forum.User'
 
 # Redirect after login/logout
-LOGIN_REDIRECT_URL = '/' 
+LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 LOGGING = {
